@@ -1,85 +1,196 @@
-<!DOCTYPE html><html lang="zh-CN" theme-mode="auto"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Ferne——一个不断前行的极客 | Ferne 的编程小屋</title><link rel="icon" type="image/x-icon" href="/favicon.ico"><link rel="preload" as="font" crossorigin="anonymous" href="/font/Bender.ttf"><link rel="preload" as="font" crossorigin="anonymous" href="/font/BenderLight.woff2"><link rel="preload" as="font" crossorigin="anonymous" href="/font/JetBrainsMono-Regular.woff2"><link rel="stylesheet" href="/css/arknights.css"><style>@font-face {
-  font-family: Bender;
-  src: local('Bender'), url("/font/Bender.ttf"), url("/font/Bender.otf");
-}
-@font-face {
-  font-family: BenderLight;
-  src: local('BenderLight'), url("/font/BenderLight.woff2") format('woff2');
-}
-@font-face {
-  font-family: 'JetBrains Mono';
-  src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
-}
-</style><meta name="page-config" content="{&quot;code_fold&quot;:null}"><script class="pjax-js">var config = {"root":"/","code_fold":15,"search":{"preload":false,"activeHolder":"键入以继续","blurHolder":"数据检索","noResult":"无 $0 相关数据"},"code":{"codeInfo":"$0 - $1 行","copy":"复制"}};
-var page_config = {
-  code_fold: null
-};
-function updatePageConfig() {
-  var newPageConfig = document.querySelector('meta[name="page-config"]');
-  if (newPageConfig) {
-    page_config = JSON.parse(newPageConfig.content);
-  }
-}
-document.addEventListener('pjax:complete', function() { updatePageConfig(); });
-updatePageConfig();</script><link type="text/css" rel="stylesheet" href="/lib/encrypt/hbe.style.css"><script src="//unpkg.com/mermaid@10.5.0/dist/mermaid.min.js"></script><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lightgallery.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-zoom.css"><link type="text/css" rel="stylesheet" href="//unpkg.com/lightgallery@2.7.1/css/lg-thumbnail.css"><link type="text/css" rel="stylesheet" href="/lib/fontawesome/css/all.min.css"><script>if (window.localStorage.getItem('theme-mode') === 'light' || window.matchMedia('(prefers-color-scheme:light)').matches)
- document.documentElement.setAttribute('theme-mode', 'light')
-if (window.localStorage.getItem('theme-mode') === 'dark' || window.matchMedia('(prefers-color-scheme:dark)').matches)
- document.documentElement.setAttribute('theme-mode', 'dark')</script><style>@font-face {
- font-family: BenderLight;
- src: local('Bender'), url("/font/BenderLight.woff2") format('woff2');
-}
-@font-face {
- font-family: 'JetBrains Mono';
- src: local('JetBrains Mono'), url('/font/JetBrainsMono-Regular.woff2') format('woff2');
-}</style><style>:root {
- --dark-background: url('https://ak.hypergryph.com/assets/index/images/ak/pc/bk.jpg');
- --light-background: url('/img/bk.jpg');
- --theme-encrypt-confirm: '确认'
-}</style><script defer src="/js/arknights.js"></script><script defer src="/js/search.js"></script><script defer src="https://vercount.one/js"></script><script defer type="module">import mermaid from '//unpkg.com/mermaid@10.5.0/dist/mermaid.esm.mjs';
-window.mermaid = mermaid;
-code.paintMermaid();
-</script><script async src="//unpkg.com/lightgallery@2.7.1/lightgallery.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script><script async src="//unpkg.com/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script><script async src="/lib/encrypt/hbe.js"></script><script async src="/js/pjax.js"></script><script class="pjax-js">reset= () => {document.querySelector('.lg-container')?.remove()
-lightGallery(document.getElementById('post-bg'), {
-  plugins: [lgZoom,lgThumbnail],
-  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
- cacheBust: false,
- selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
- switches: {'article': Pjax.switches.sideBySide},
- switchesOptions: {
-   'article': {
-     classNames: {
-       remove: "pjax-out",
-       add: "pjax-in"
-     }
-   }
- }
-});
-document.addEventListener("pjax:complete", reset);document.addEventListener('pjax:success', _ => {
- const script = document.createElement('script');
- script.src = 'https://vercount.one/js';
- document.head.appendChild(script);
-});reset()})</script><script class="pjax-js">reset= () => {document.querySelector('.lg-container')?.remove()
-const postBg = document.querySelector('#post-bg');
-if (postBg) lightGallery(postBg, {
-  plugins: [lgZoom,lgThumbnail],
-  selector: '.item-img'})}</script><script>window.addEventListener("load",() => {pjax = new Pjax({
- cacheBust: false,
- selectors: ['title','article','#aside-block','.pjax-js','data-pjax','.vercount','meta[name=page-config]'],
- switches: {'article': Pjax.switches.sideBySide},
- switchesOptions: {
-   'article': {
-     classNames: {
-       remove: "pjax-out",
-       add: "pjax-in"
-     }
-   }
- }
-});
-document.addEventListener("pjax:complete", reset);document.addEventListener('pjax:success', _ => {
- const script = document.createElement('script');
- script.src = 'https://vercount.one/js';
- document.head.appendChild(script);
-});reset()})</script><meta name="generator" content="Hexo 8.0.0"></head><body><div class="loading" style="opacity: 0;"><div class="loadingBar left"></div><div class="loadingBar right"></div></div><main><header class="closed"><div class="navBtn"><i class="navBtnIcon"><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span><span class="navBtnIconBar"></span></i></div><nav><div class="navItem" id="search-header"><span class="navItemTitle"><input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="数据检索" spellcheck="false" maxlength="50" type="text" id="search-input"></span></div><div class="navItem" id="search-holder"></div><div class="search-popup" tabindex="0"><div id="search-result"></div></div><ol class="navContent"><li class="navItem"><a class="navBlock" href="/"><span class="navItemTitle">Home</span></a></li><li class="navItem" matchdata="categories,tags"><a class="navBlock" href="/archives/"><span class="navItemTitle">Archives</span></a></li></ol></nav></header><article><div id="post-bg"><div id="post-title"><h1>Ferne——一个不断前行的极客</h1><div id="post-info"><span>文章发布时间: <div class="control"><time datetime="2023-10-01T04:00:00.000Z" id="date"> 2023-10-01</time></div></span><br><span>最后更新时间: <div class="control"><time datetime="2025-10-26T10:52:42.227Z" id="updated"> 2025-10-26</time></div></span><br><span id="vercount_container_page_pv">页面浏览: <span class="control" id="vercount_value_page_pv">加载中...</span></span></div></div><hr><div id="post-content"><p>以下内容均来自本人的 <a target="_blank" rel="noopener" href="https://github.com/aliferne">GitHub</a></p>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 8.0.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha256-VHqXKFhhMxcpubYf9xiWdCiojEbY9NexQ4jh8AxbvcM=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"aliferne.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.25.0","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="以下内容均来自本人的 GitHub 👋 很高兴见到你  😁 你好！我是 Ferne，是在校大学生 💻 我已经敲了好几年代码了，并且乐此不疲 😎 与此同时我也会说英语、俄语、德语、日语等等 🚀 About Me 🤔 @NCUHOME 前成员 😁 NCU Passion 现成员 🔭 主要是给嵌入式和 RoboMaster 敲代码 🌱 基本对所有计算机分支都感兴趣 📖 正在学 HTM">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ferne——一个不断前行的极客">
+<meta property="og:url" content="https://aliferne.github.io/me/index.html">
+<meta property="og:site_name" content="Ferne 的编程小屋">
+<meta property="og:description" content="以下内容均来自本人的 GitHub 👋 很高兴见到你  😁 你好！我是 Ferne，是在校大学生 💻 我已经敲了好几年代码了，并且乐此不疲 😎 与此同时我也会说英语、俄语、德语、日语等等 🚀 About Me 🤔 @NCUHOME 前成员 😁 NCU Passion 现成员 🔭 主要是给嵌入式和 RoboMaster 敲代码 🌱 基本对所有计算机分支都感兴趣 📖 正在学 HTM">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://readme-typing-svg.herokuapp.com/?size=25&duration=5000&color=8C43EA&vCenter=true&width=1000&height=40&lines=Die+Melodie+von+Null+und+Eins.">
+<meta property="og:image" content="https://skillicons.dev/icons?i=py,go,c,cpp,dart,html,css,js,rust,bash">
+<meta property="og:image" content="https://skillicons.dev/icons?i=flask,flutter,bootstrap,opencv,arduino">
+<meta property="og:image" content="https://skillicons.dev/icons?i=anaconda,git,github,linux,debian,ubuntu,vim,vscode,cmake,docker,md,nginx,mongodb,raspberrypi">
+<meta property="og:image" content="https://github-readme-stats.vercel.app/api?username=aliferne&show_icons=true&theme=default">
+<meta property="og:image" content="https://github-readme-stats.vercel.app/api/top-langs/?username=aliferne&layout=compact&theme=default">
+<meta property="og:image" content="https://streak-stats.demolab.com/?user=aliferne&theme=gruvbox-duo">
+<meta property="og:image" content="https://github-readme-activity-graph.vercel.app/graph?username=aliferne&theme=github-compact&hide_border=true&area=true">
+<meta property="article:published_time" content="2023-10-01T04:00:00.000Z">
+<meta property="article:modified_time" content="2025-10-26T10:52:42.227Z">
+<meta property="article:author" content="Ferne">
+<meta property="article:tag" content="Ferne">
+<meta property="article:tag" content="Ferne 的编程小屋">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://readme-typing-svg.herokuapp.com/?size=25&duration=5000&color=8C43EA&vCenter=true&width=1000&height=40&lines=Die+Melodie+von+Null+und+Eins.">
+
+
+<link rel="canonical" href="https://aliferne.github.io/me/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":false,"lang":"zh-CN","comments":true,"permalink":"https://aliferne.github.io/me/index.html","path":"me/index.html","title":"Ferne——一个不断前行的极客"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Ferne——一个不断前行的极客 | Ferne 的编程小屋
+</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Ferne 的编程小屋</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">奔赴山海，保持热爱</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-me"><a href="/me/" rel="section"><i class="fa fa-user fa-fw"></i>Me</a></li>
+  </ul>
+</nav>
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%91%8B-%E5%BE%88%E9%AB%98%E5%85%B4%E8%A7%81%E5%88%B0%E4%BD%A0"><span class="nav-number">1.</span> <span class="nav-text">👋 很高兴见到你</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%9A%80-About-Me"><span class="nav-number">2.</span> <span class="nav-text">🚀 About Me</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%98%8E-%E8%AF%AD%E8%A8%80%E5%92%8C%E5%B7%A5%E5%85%B7"><span class="nav-number">3.</span> <span class="nav-text">😎 语言和工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%8E%AF-%E4%BF%9D%E6%8C%81%E7%83%AD%E7%88%B1%EF%BC%8C%E5%A5%94%E8%B5%B4%E5%B1%B1%E6%B2%B3"><span class="nav-number">4.</span> <span class="nav-text">🎯 保持热爱，奔赴山河</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%93%88-GitHub-%E5%9B%BE%E8%A1%A8"><span class="nav-number">5.</span> <span class="nav-text">📈 GitHub 图表</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Ferne</p>
+  <div class="site-description" itemprop="description">微信公众号：Ferne 的编程小屋</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">1</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner page posts-expand">
+
+
+    
+    
+    
+    <div class="post-block" lang="zh-CN"><header class="post-header">
+
+<h1 class="post-title" itemprop="name headline">Ferne——一个不断前行的极客
+</h1>
+
+<div class="post-meta-container">
+</div>
+
+</header>
+
+      
+      
+      
+      <div class="post-body">
+          <p>以下内容均来自本人的 <a target="_blank" rel="noopener" href="https://github.com/aliferne">GitHub</a></p>
 <h2 id="👋-很高兴见到你"><a href="#👋-很高兴见到你" class="headerlink" title="👋 很高兴见到你"></a>👋 很高兴见到你</h2><img src="https://readme-typing-svg.herokuapp.com?size=25&duration=5000&color=8C43EA&vCenter=true&width=1000&height=40&lines=Die+Melodie+von+Null+und+Eins." alt="tags">
 
 <p>😁 你好！我是 Ferne，是在校大学生</p>
@@ -136,4 +247,52 @@ document.addEventListener("pjax:complete", reset);document.addEventListener('pja
     <img src="https://github-readme-activity-graph.vercel.app/graph?username=aliferne&theme=github-compact&hide_border=true&area=true" alt="Ferne's Activity Graph">  
   </p>
 </div>
-<div id="paginator"></div></div><div id="post-footer"></div></div><div class="bottom-btn"><div><a class="i-top" id="to-top" onClick="scrolls.scrolltop();" title="回到顶部" style="opacity: 0; display: none;">∧ </a><a class="i-index" id="to-index" href="#toc-div" title="文章目录">≡</a><a class="i-color" id="color-mode" onClick="colorMode.change()" title="切换主题"></a></div></div></article><aside><div id="about"><a href="/" id="logo"><img src="https://ak.hypergryph.com/assets/index/images/ak/pc/faction/1.png" alt="Logo" style="margin:0;border-radius:0;"></a><h1 id="Dr"><a href="/">Ferne</a></h1><div id="description"><p>微信公众号：Ferne 的编程小屋</p></div><div id="social-links"><a class="social" target="_blank" rel="noopener" href="https://github.com/aliferne"><i class="fab fa-github" alt="GitHub"></i></a></div></div><div id="aside-block"><div id="toc-div"><h1>目录</h1><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%91%8B-%E5%BE%88%E9%AB%98%E5%85%B4%E8%A7%81%E5%88%B0%E4%BD%A0"><span class="toc-number">1.</span> <span class="toc-text">👋 很高兴见到你</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%9A%80-About-Me"><span class="toc-number">2.</span> <span class="toc-text">🚀 About Me</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%98%8E-%E8%AF%AD%E8%A8%80%E5%92%8C%E5%B7%A5%E5%85%B7"><span class="toc-number">3.</span> <span class="toc-text">😎 语言和工具</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%8E%AF-%E4%BF%9D%E6%8C%81%E7%83%AD%E7%88%B1%EF%BC%8C%E5%A5%94%E8%B5%B4%E5%B1%B1%E6%B2%B3"><span class="toc-number">4.</span> <span class="toc-text">🎯 保持热爱，奔赴山河</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%93%88-GitHub-%E5%9B%BE%E8%A1%A8"><span class="toc-number">5.</span> <span class="toc-text">📈 GitHub 图表</span></a></li></ol></div></div><footer><nobr>构建自 <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></nobr><wbr><nobr> 使用主题 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus/hexo-theme-arknights">Arknights</a></nobr><wbr><nobr> 主题作者 <a target="_blank" rel="noopener" href="https://github.com/Yue-plus">Yue_plus</a></nobr></footer></aside></main><canvas id="canvas-dust"></canvas></body></html>
+
+      </div>
+      
+      
+      
+    </div>
+
+    
+    
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Ferne</span>
+  </div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>
