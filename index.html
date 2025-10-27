@@ -204,7 +204,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2025-10-27 15:58:18 / 修改时间：16:00:20" itemprop="dateCreated datePublished" datetime="2025-10-27T15:58:18+08:00">2025-10-27</time>
+      <time title="创建时间：2025-10-27 15:58:18 / 修改时间：16:08:21" itemprop="dateCreated datePublished" datetime="2025-10-27T15:58:18+08:00">2025-10-27</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -248,30 +248,18 @@
 <hr>
 <p>Issue 1413 的 PR</p>
 <p>本次主要是<strong>学到了 分支 与 PR 的对应关系</strong>：</p>
-<p>aliferne:</p>
 <blockquote>
-<p>我似乎在重新创建一个简单得多的 PR 中遇到了困难</p>
-</blockquote>
-<blockquote>
+<p>&#x3D;&#x3D;@aliferne&#x3D;&#x3D;<br>我似乎在重新创建一个简单得多的 PR 中遇到了困难</p>
 <p>我打开 GitHub 然后创建 Pull Request 的时候总是会让我 View Pull Request，然后跳转到这里来</p>
-</blockquote>
-<blockquote>
 <p>我打算关闭这个 PR，先提交那个，然后重新来过，你觉得怎样</p>
 </blockquote>
-<p>Predidit:</p>
 <blockquote>
-<p>PR 是跟随分支的，提交 PR 的一般流程是单独建立一个相关的分支，从对应分支发起 PR ，而不是从 fork 仓库的 main 分支 PR</p>
-</blockquote>
-<blockquote>
+<p>&#x3D;&#x3D;@Predidit&#x3D;&#x3D;:<br>PR 是跟随分支的，提交 PR 的一般流程是单独建立一个相关的分支，从对应分支发起 PR ，而不是从 fork 仓库的 main 分支 PR</p>
 <p>这样才能保证各个 PR 的独立，并且各个分支的变更会被实时同步到对应的 PR</p>
-</blockquote>
-<blockquote>
 <p>在你的现在的处理下，如果你想保留这个 PR ，需要先 revert 掉在这个PR上多余的弹幕相关的提交，让这个 PR 恢复正常</p>
-</blockquote>
-<blockquote>
 <p>然后从你的 fork 仓库建立一个新的分支，那个分支基于 kazumi 主分支，而不是你现在这个修改过了的分支，然后在那个分支上应用弹幕相关变更，并从那个分支发起 PR</p>
 </blockquote>
-<p>换句话说，老生常谈的 main-dev 分支模式，在 dev 上去修改东西，PR 也在 dev 上发起，不要污染 main 分支，改几个 PR 就弄几个 dev</p>
+<p>换句话说，老生常谈的 main-dev 分支模式，<strong>在 dev 上去修改东西，PR 也在 dev 上发起，不要污染 main 分支，改几个 PR 就弄几个 dev</strong></p>
 <p><strong>此外就是不要将 <code>controller</code> 作为注入项传入，这可能和 <code>controller</code> 本身所要负责的逻辑等有关</strong>，<br>如果传 <code>controller</code>，反而就不确定什么时候会被 <code>dispose</code> 了，可能会在页面退出前 <code>dispose</code>，也可能一直都不会被 <code>dispose</code>，<br>不管是哪个，结果上来说都不太好（内存泄漏或者程序提前终止啥的）</p>
 <p>然后是自己在写代码加 feature 的时候发现其实对于 search_controller.dart 这种文件（用的是 <code>MobX</code> 库），<br>需要注意一下就是用 <code>Observer</code> 模式之类的，和 <code>setState</code> 还是不太一样的，观察-被观察，然后触发重建。</p>
 <p>这个问题主要是在写过滤开关的时候碰到的问题，<code>Switch</code> 就是切换不了状态——我的推测是没重建，事实也确实如此，但是更复杂一点：</p>
