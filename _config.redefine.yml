@@ -1,0 +1,63 @@
+# https://redefine-docs.ohevan.com/zh/docs/basic
+info:
+  title: Ferne 的编程小屋
+  subtitle: Coding for fun 🚀
+  author: Ferne
+  url: https://aliferne.github.io
+
+# FIXME: 图片显示不正常
+defaults:
+  favicon: ./images/amiya-avator.jpg
+  logo: images/amiya-avator.jpg
+  avatar: ./images/amiya-avator.jpg
+
+# 主题色，限制只能是 Hex
+# colors:
+#   primary: 
+
+global:
+  chinese:
+    enable: false
+    # defaults to Noto Sans SC
+    # family:
+    # decoration of fonts
+    # url:
+  english:
+    enable: false
+    # defaults to Farsan
+    # family:
+    # decoration of fonts
+    # url:
+  # 阅读进度
+  scroll_progress:
+    bar: true
+    percentage: true
+  # 侧边工具栏
+  side_tools:
+    auto_expand: false
+
+# 第一屏
+home_banner:
+  enable: true
+  # 不随着页面滚动而滚动
+  style: fixed
+  # set images for light mode and dark mode
+  # image:
+  #   light:
+  #   dark:
+  title: 欢迎来到我的个人博客
+  subtitle:
+    text: ["Die Melodie von Null und Eins."]
+
+  social_links:
+    links:
+      github: https://github.com/aliferne
+      # qrs:
+# TODO: 太多了后面再慢慢设置吧
+# navbar:
+#   color:
+#     left:
+#     right:
+#     transparency:
+#   links:
+    

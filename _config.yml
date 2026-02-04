@@ -96,12 +96,15 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: landscape
+theme: redefine
+# Then related from doc:
+# https://redefine-docs.ohevan.com/zh/docs/getting-started
+# I should make a new conf file: _config.redefine.yml
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
   type: 'git'
   repository: git@github.com:aliferne/aliferne.github.io.git
-  branch: from-endeavourOS
+  branch: master
   message: "Updated when $(date '+%Y-%m-%d %H:%M:%S')"
