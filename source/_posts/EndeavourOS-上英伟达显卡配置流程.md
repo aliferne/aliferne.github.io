@@ -21,9 +21,39 @@ nvidia-inst
 
 此外 `optimus-manager` 也就没必要安装了，反正都切不了显卡，用上面的命令能正常带动就这样就行了。
 
+然后正常情况下就是核显负责渲染桌面，独显基本不干活，要让独显渲染只需要：
+
+`prime-run %command%`
+
+对，因此 `nvidia-prime` 我个人建议还是装一下。不然要写 `_NV_XXX _NV_XXX` 的环境变量还是相当麻烦的。
+
+然后写一下 desktop 文件也可以，我自己就写了一个 MuseDash 的然后软链到 `/usr/share/applications` 里面了。这样子直接在 KDE 的 KRuneer 里面搜就可以直接跑，命令都不用输入：
+
+```plaintext
+# Never move this file to anywhere
+[Desktop Entry]
+Name=Muse Dash
+Name[zh_CN]=喵斯快跑
+# Make sure that your Linux system has been installed with `nvidia-prime`
+Exec=prime-run wine /path/to/MuseDash.exe
+StartupNotify=true
+Terminal=false
+Icon=/path/to/MuseDash/logo.jpg
+Type=Application
+Categories=Game;
+Comment=Muse Dash
+Comment[zh_CN]=Muse Dash
+```
+
+```bash
+sudo ln -s /path/to/MuseDash.desktop /usr/share/applications/MuseDash.desktop
+```
+
+---
+
 郑重提醒：为了避免你设置完之后整个电脑桌面环境炸掉还不知道怎么退档，强烈建议你先装 `timeshift` 然后先保存一份快照，操作有风险，谨慎执行下面的命令，在没有搞清楚命令是干什么的之前都尽量不要执行，此外也不要完全信任 AI 给你的 “最终解决方案”，不然很有可能这一站将会是你 Linux 生涯的终点站。
 
-先说下我个人电脑情况，我的电脑是华硕天选 5 Pro：
+先说下我个人电脑情况，我的电脑是华硕天选 5 Pro，装的是 Endeavour OS：
 
 ![fastfecth-result](./images/fastfetch-result.png)
 
@@ -276,7 +306,7 @@ Mon Feb  9 13:04:57 2026
 
 现在唯一的问题就是 dmesg 里面显示 AMD 核显卡和 Nvidia 独显卡加载是成功的
 
-### dmesg 内容
+### dmseg 内容
 
 ```bash
 $ sudo dmesg | grep -i -E "(nvidia|amd)"
