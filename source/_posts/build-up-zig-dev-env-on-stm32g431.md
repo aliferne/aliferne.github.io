@@ -1334,6 +1334,9 @@ Warn : no flash bank found for address 0x2000005c
 
 ![][ZIG-BUILD-SUCCESS]
 
+由于发现视频无法预览，故直接提供链接：
+https://aliferne.github.io/images/build-up-zig-dev-env-on-stm32g431/%5BZIG-BUILD%5D-Success.mp4
+
 ## 附录
 
 ### 对链接过程和内存分配的更加细致的观察
