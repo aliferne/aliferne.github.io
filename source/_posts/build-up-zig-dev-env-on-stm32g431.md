@@ -11,17 +11,19 @@ tags:
 - c
 ---
 
+## 特别鸣谢
+
+此工程模板已经开源，在此需要感谢优秀的开源项目 [STM32-Zig-移植指南][stm32-zig-porting-guide]，只不过它是基于 F7 的，并且没有提及链接脚本的问题（这也是本文要解决的问题）。
+
+[我的开源直链，点击直达][self-template-opensource]
+
 ## 开发环境说明
 
 - OS: Endeavour OS（**注意我不用 Win11**！但是这套技巧应该是通用的）
 - Vscode (插件：EIDE, Cortex-Debug, Ziglang, C/C++)
-- arm-none-eabi 工具链
+- Arm GNU GCC Toolchain
 - STM32CubeMX
-- 蓝桥杯开发板（新版） （STM32G431RBT6）
-
-因为 Zig 语言貌似还没有语法高亮的支持，
-下面的 Zig 代码块我都标注的是 Rust（因为两者关键字和语法重合度较高），
-不要觉得奇怪😁
+- 蓝桥杯开发板（新版）（STM32G431RBT6）
 
 ## 搭建 Zig 开发环境实现点灯
 
@@ -76,7 +78,7 @@ LED 让它默认高电平，这样子 ~~没那么晃眼~~ 等会点灯现象明�
   移除这个给 armcc 用的汇编启动文件，
   添加选择 Makefile 后 CubeMX 新生成的汇编启动文件。
 - 构建配置选择 GNU Arm Embedded Toolchain
-- 链接脚本路径则填入 STM32G431XX_FLASGH.ld 的相对路径
+- 链接脚本路径则填入 STM32G431XX_FLASH.ld 的相对路径
 - 烧录配置选择 OpenOCD，并将芯片配置改为 stm32g4x.cfg，接口配置改为 cmsis-dap.cfg
 
 然后再说到 Vscode 对 Debug 的支持，
@@ -127,7 +129,16 @@ LED 让它默认高电平，这样子 ~~没那么晃眼~~ 等会点灯现象明�
 }
 ```
 
-如果你想要看外设寄存器的值，考虑装一个 Peripheral Viewer 插件。并导入 SVD 文件：
+如果你想要像 Keil 一样动态查看值（不过只能看值）的话，加入：
+
+```json
+"liveWatch": { // Cortex-Debug 的动态监视功能，同 Keil 的全局监视
+    "enabled": true,
+    "samplesPerSecond": 4
+},
+```
+
+如果你想要看外设寄存器的值，考虑装一个 Peripheral Viewer 插件，并导入 SVD 文件：
 
 ```json
 // 看 Periphial （外设） 值
@@ -159,8 +170,8 @@ Makefile 也不是必须的，但我这里为了配置环境会建议你先留�
 /// NOTE: BUILD_BY_EIDE 默认表示用 EIDE 构建，点灯代码在这个文件里
 /// NOTE: BUILD_BY_ZIG 表示用 zig 构建，点灯代码在 src/main.zig 里
 #define BUILD_BY_EIDE
-// #defiBUILD_BY_EIDEe BUILD_BY_ZIG
-// USER CODE END PD
+// #define BUILD_BY_ZIG
+/* USER CODE END PD */
 ```
 
 外部函数声明：
@@ -168,7 +179,8 @@ Makefile 也不是必须的，但我这里为了配置环境会建议你先留�
 ```c
 /* USER CODE BEGIN 0 */
 #if defined(BUILD_BY_ZIG) && !defined(BUILD_BY_EIDE)
-extern void zigMain(void); // 需要 extern 声明以告知编译器确实存在这么个函数
+// 需要 extern 声明以告知编译器确实存在这么个函数
+extern void zigMain(void); 
 #endif
 /* USER CODE END 0 */
 ```
@@ -201,7 +213,7 @@ extern void zigMain(void); // 需要 extern 声明以告知编译器确实存在
 
 然后编辑 `src/main.zig`，删除默认代码并加入如下代码：
 
-```rust
+```zig
 export fn zigMain() void {
     while (true) {}
 }
@@ -315,7 +327,7 @@ arm-none-eabi-gcc build-make/main.o build-make/gpio.o build-make/usart.o build-m
 
 现在我们打开 `build.zig`，删掉多余的注释和 `build` 函数内的内容，然后添加如下内容：
 
-```rust
+```zig
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
@@ -346,7 +358,7 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
-        .link_libc = false, // 不需要 -lgcc，因为 Zig 自带一套运行时
+        .link_libc = false, // 嵌入式环境不需要 libc
         .single_threaded = true, // 单线程
         .sanitize_c = .off, // 移除 C 语言的 UBSAN 运行时库（避免二进制文件膨胀）
     });
@@ -358,6 +370,7 @@ pub fn build(b: *std.Build) void {
         .linkage = .static, // 静态链接，我们手动指定要链接什么文件
     });
 
+    // 找 arm gcc 编译器，如果没有加入环境的话的话需要用 -Darmgcc 定义
     const arm_gcc_pgm = if (b.option([]const u8, "armgcc", "Path to arm-none-eabi-gcc compiler")) |arm_gcc_path|
         b.findProgram(&.{"arm-none-eabi-gcc"}, &.{arm_gcc_path}) catch {
             std.log.err("Couldn't find arm-none-eabi-gcc at provided path: {s}\n", .{arm_gcc_path});
@@ -1092,8 +1105,6 @@ Makefile 编译的文件，VirtAddr 和 PhysAddr 不一致，但是 Zig 编译�
 
 我们发现，`0x0001 f000` 属于：
 > Flash, system memory or SRAM, depending on BOOT configuration
-而对这里的访问导致了 signal handler called，其地址在 `0xffff fff9`，属于：
-> Cortex -M4 with FPU Internal Peripherals
 
 根据蓝桥杯板子的 BOOT0 引脚配置，可以得知现在是主存作为 boot 引导区域（这似乎是废话）
 
@@ -1251,11 +1262,9 @@ Zig 编译产物，LMA == VMA，因此不会将 Flash 内容复制到 RAM 中，
 
 可以发现大概大了 5KB 左右，如果你的板子内存杠杠的话用 Zig 完全没问题：
 
-```py
+```python
 Python 3.14.2 (main, Jan  2 2026, 14:27:39) [GCC 15.2.1 20251112] on linux
 Type "help", "copyright", "credits" or "license" for more information.
->>> 15328 - 9852
-5476
 >>> (15328 - 9852) / 1024
 5.34765625
 ```
@@ -1264,7 +1273,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 
 接下来我们来写 `src/main.zig`：
 
-```rust
+```zig
 const hal = @cImport({
     @cDefine("STM32G431xx", {});
     @cDefine("USE_HAL_DRIVER", {});
@@ -1332,10 +1341,10 @@ Warn : no flash bank found for address 0x2000005c
 
 现象如下面视频：
 
-![][ZIG-BUILD-SUCCESS]
+<video width="100%" height="100px" controls>
+  <source src="/images/build-up-zig-dev-env-on-stm32g431/[ZIG-BUILD]-Success.mp4" type="video/mp4">
+</video>
 
-由于发现视频无法预览，故直接提供链接：
-https://aliferne.github.io/images/build-up-zig-dev-env-on-stm32g431/%5BZIG-BUILD%5D-Success.mp4
 
 ## 附录
 
@@ -1386,6 +1395,8 @@ Reset_Handler:
 此外请注意这一句：
 
 `/* Copy the data segment initializers from flash to SRAM */`
+
+这也是我们上面分析出来错误的一环，可以得知默认行为是会将 `_sdata` 等字段从 Flash 复制到 RAM，而我们的 `.init_array` 和 `.fini_array` 由于没有显式声明导致读取了 RAM 的垃圾值。
 
 而通过对 `_mainCRTStartup` 的进一步抓包，我们可以观察到：
 
@@ -1584,7 +1595,7 @@ test.c:10:9: 附注：‘uninit_var’在此声明
 
 下面是一段 Zig 的示例代码（摘自官网）：
 
-```rust
+```zig
 const std = @import("std");
 const parseInt = std.fmt.parseInt;
 
@@ -1613,7 +1624,7 @@ test "parse integers" {
 
 以及我自己在做的玩具 Zig 项目：
 
-```rust
+```zig
 pub const ColorType = enum { R, G, B };
 
 // 错误是一种枚举类型，你无法在错误里面捎带太多信息，
@@ -1764,3 +1775,5 @@ Zig 是一个还没 1.0 的语言，并且 0.16 还大改了 0.15 的一些 API�
 [impl-of-__libc_init_array-2]: https://static.grumpycoder.net/pixel/uC-sdk-doc/initfini_8c_source.html
 [cortexm4-xpsr]: https://blog.csdn.net/kouxi1/article/details/122914131
 [lma-vma]: https://www.cnblogs.com/blogernice/articles/9856216.html
+[self-template-opensource]: https://github.com/aliferne/STM32G431-Zig-Framework
+
