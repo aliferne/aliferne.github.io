@@ -25,6 +25,8 @@ tags:
 - STM32CubeMX
 - 蓝桥杯开发板（新版）（STM32G431RBT6）
 
+由于博客暂时不支持 Zig 的语法高亮，所以全部替换为 Rust（这两个关键字和语法重合度较高），不要见怪。
+
 ## 搭建 Zig 开发环境实现点灯
 
 ### Zig 编译器和 arm-none-eabi 工具链搭建
@@ -213,7 +215,7 @@ extern void zigMain(void);
 
 然后编辑 `src/main.zig`，删除默认代码并加入如下代码：
 
-```zig
+```rust
 export fn zigMain() void {
     while (true) {}
 }
@@ -327,7 +329,7 @@ arm-none-eabi-gcc build-make/main.o build-make/gpio.o build-make/usart.o build-m
 
 现在我们打开 `build.zig`，删掉多余的注释和 `build` 函数内的内容，然后添加如下内容：
 
-```zig
+```rust
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
@@ -1273,7 +1275,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 
 接下来我们来写 `src/main.zig`：
 
-```zig
+```rust
 const hal = @cImport({
     @cDefine("STM32G431xx", {});
     @cDefine("USE_HAL_DRIVER", {});
@@ -1595,7 +1597,7 @@ test.c:10:9: 附注：‘uninit_var’在此声明
 
 下面是一段 Zig 的示例代码（摘自官网）：
 
-```zig
+```rust
 const std = @import("std");
 const parseInt = std.fmt.parseInt;
 
@@ -1624,7 +1626,7 @@ test "parse integers" {
 
 以及我自己在做的玩具 Zig 项目：
 
-```zig
+```rust
 pub const ColorType = enum { R, G, B };
 
 // 错误是一种枚举类型，你无法在错误里面捎带太多信息，
