@@ -1,5 +1,5 @@
 ---
-title: STM32G431 搭建 Zig 开发环境
+title: "[STM32] STM32G431 搭建 Zig 开发环境"
 date: 2026-02-17 18:00:00
 categories:
 - embedded
@@ -11,13 +11,19 @@ tags:
 - c
 ---
 
-## 特别鸣谢
+# 特别鸣谢
 
 此工程模板已经开源，在此需要感谢优秀的开源项目 [STM32-Zig-移植指南][stm32-zig-porting-guide]，只不过它是基于 F7 的，并且没有提及链接脚本的问题（这也是本文要解决的问题）。
 
 [我的开源直链，点击直达][self-template-opensource]
 
-## 开发环境说明
+温馨提示：
+本文十分硬核，并非只有常规的配置环境步骤，
+还包含对 Cortex M4 底层架构的深入剖析，
+带你一步步调试 `HardFault`，
+如果你是小白，可能需要一定的理解时间。
+
+# 开发环境说明
 
 - OS: Endeavour OS（**注意我不用 Win11**！但是这套技巧应该是通用的）
 - Vscode (插件：EIDE, Cortex-Debug, Ziglang, C/C++)
@@ -27,9 +33,9 @@ tags:
 
 由于博客暂时不支持 Zig 的语法高亮，所以全部替换为 Rust（这两个关键字和语法重合度较高），不要见怪。
 
-## 搭建 Zig 开发环境实现点灯
+# 搭建 Zig 开发环境实现点灯
 
-### Zig 编译器和 arm-none-eabi 工具链搭建
+## Zig 编译器和 arm-none-eabi 工具链搭建
 
 首先去 [Zig语言官网][ziglang] 下载编译器，我这里使用的版本如下：
 
@@ -51,7 +57,7 @@ echo "export PATH=$PATH:/path/to/your/zig/executable" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-### CubeMX 基础配置
+## CubeMX 基础配置
 
 选择 STM32G431RBT6 生成工程到指定位置（这一步应该不用我说吧），
 工具链选择：先 MDK-ARM （用于给 EIDE 导入工程），
@@ -69,11 +75,11 @@ LED 让它默认高电平，这样子 ~~没那么晃眼~~ 等会点灯现象明�
 
 ![][CubeMX基础配置2]
 
-### Vscode 环境配置
+## Vscode 环境配置
 
 然后打开 Vscode，选择 EIDE 并导入工程，
 然后插件会提示你是否要在 MDK-ARM 目录下创建 workspace，
-这个就看你个人习惯了，我是更喜欢把 worksapce 放到父文件夹去的。
+这个就看你个人习惯了，我是更喜欢把 workspace 放到父文件夹去的。
 
 打开工作区之后侧边导航栏点开 EIDE：
 - 项目资源点开 Application/MDK-ARM，
@@ -156,7 +162,7 @@ Makefile 也不是必须的，但我这里为了配置环境会建议你先留�
 因为使用 Zig 构建需要引入一些平时不会去留意的库（Makefile 帮我们做好了），
 我们需要通过 Makefile 查看。
 
-### 加入点灯代码
+## 加入点灯代码
 
 接下来编辑 `Core/Src/main.c` 找到对应位置并加入如下代码：
 
@@ -221,7 +227,7 @@ export fn zigMain() void {
 }
 ```
 
-### Zig 项目初始化
+## Zig 项目初始化
 
 如果你已经设置好了 Zig 的环境变量，
 那么直接 `cd` 到你的工作区， `zig init` 一下就可以生成一个项目了。
@@ -238,11 +244,11 @@ export fn zigMain() void {
 
 我们这里暂时不需要 `src/root.zig`，等会会改 `build.zig`，使之只使用 `src/main.zig` 的代码。
 
-### 修改 `build.zig`
+## 修改 `build.zig`
 
 接下来我们就要开始写相当重量级的东西了，理解这个过程之后你对整个 STM32 生成项目的步骤都会有质的飞跃。
 
-#### 编译原理简单回顾
+### 编译原理简单回顾
 
 我们都知道，C 语言的编译生成二进制文件的过程分为：
 
@@ -261,7 +267,7 @@ Zig 和 C ，以及各种多语言项目之所以可行，其实就在上面已�
 两者链接一下，就可以实现多语言项目，
 当然前提是生成的二进制文件指令集要匹配，源代码要注明外部都有什么东西。
 
-#### 观察 Makefile
+### 观察 Makefile
 
 让我们把 Makefile 的 `BUILD_DIR` 换成 `build-make`（防止覆盖 EIDE 默认的 `build` 目录）
 
@@ -323,7 +329,7 @@ arm-none-eabi-gcc build-make/main.o build-make/gpio.o build-make/usart.o build-m
 
 有了这些信息之后，我们要干的事情就很简单了，只要解决这些问题，理论上就可以用 zig 开发单片机了。
 
-#### 修改 `build.zig`， 编译、链接
+### 修改 `build.zig`， 编译、链接
 
 先提醒一句，为了避免是 Zig 代码导致的灯不闪烁，现在启用的宏是 `BUILD_BY_EIDE`.
 
@@ -508,7 +514,7 @@ error: the following command failed with 1 compilation errors:
 
 可以看到是链接文件的问题，它提示我们 RAM 这个内存区域没有定义，那么我们来看一下 CubeMX 生成的 ld 文件：
 
-### 修改 `STM32G431XX_FLASH.ld`，链接
+## 修改 `STM32G431XX_FLASH.ld`，链接
 
 我们来看这一段：
 
@@ -640,7 +646,7 @@ Warn : no flash bank found for address 0x2000005c
 ** Programming Finished **
 ```
 
-### 为何 `HardFault` ？
+## 为何 `HardFault` ？
 
 首先我想提醒的是，一定注意是小端序的，不要读错内存了！
 **小端序是低位放在低地址的！**
@@ -758,9 +764,9 @@ Cortex M4 编程手册指导我们应当再看一下其他的错误寄存器，�
 看到了吗，这里有一个 `0xFFFF FFF9`，让我们看下上面的解释。
 > 返回至线程模式，异常返回过程将使用主堆栈（MSP） 中保存的非浮点状态，且返回后的程序执行也将继续使用主堆栈（MSP）。
 
-这说明进行了状态切换，现在我们没有更多信息了，那让我们整理一下已有的信息吧。
+这说明产生了异常，并且此时硬件自动压栈，产生了这个魔数，现在我们没有更多信息了，那让我们整理一下已有的信息吧。
 
-#### 故障信息汇总
+### 故障信息汇总
 
 1. 程序执行流程为 `Reset_Handler` --> `__libc_init_array` --> `??` --> 状态切换 --> `HardFault_Handler`
 2. 可能是由于错误的函数调用（执行了某个非法地址的函数，其中疑点是 ?? 所代表的 PC 地址）导致了 `HardFault`
@@ -825,13 +831,13 @@ __libc_init_array (void)
 因此这里的源码只能作为一个参考，实际上需要逆向生成的二进制文件，
 但是既然有了这段源码，就可以推知应该是这里的数组或者 `_init()` 哪里有问题了。
 
-### 对 `zig` 和 `gcc` 构建的两种二进制产物的逆向分析
+## 对 `zig` 和 `gcc` 构建的两种二进制产物的逆向分析
 
 我们接下来开始尝试分析这两个二进制文件的异同，看下究竟是什么导致的问题。
 经过上面的分析，我们已经可以将问题锁定在函数调用相关的操作上了，
 尤其是 `__libc_init_array`，这是需要重点排查的。
 
-#### 初始设定
+### 初始设定
 
 为了简化操作，我们临时给一堆东西赋个值。
 
@@ -846,7 +852,7 @@ __libc_init_array (void)
 ❯ zig_elf=zig-out/bin/zig-test.elf
 ```
 
-#### 文件头分析
+### 文件头分析
 
 ```bash
 ❯ $are -h $make_elf
@@ -901,7 +907,7 @@ ELF Header:
 入口点无法保证完全相同（大概是因为一些 bss 段、data 段等的占用），
 但是只要在 `0x0800 0000` 以后即可（这和 Cortex M4 的复位启动流程有关，见[下文](#cortex-m4-启动流程)）
 
-#### 内存分析
+### 内存分析
 
 ```bash
 ❯ $are -l $make_elf
@@ -965,7 +971,7 @@ Program Headers:
 Makefile 编译的文件，VirtAddr 和 PhysAddr 不一致，但是 Zig 编译的则是一致的，
 这是否会导致什么区别呢？
 
-#### 反汇编分析
+### 反汇编分析
 
 接下来我们来抓包 `__libc_init_array`：
 
@@ -1095,9 +1101,9 @@ Makefile 编译的文件，VirtAddr 和 PhysAddr 不一致，但是 Zig 编译�
 那么为什么 `zig cc` 会把它制造出来呢？这可能就是 `zig` 内部的默认实现了。
 那么 `zig` 默认会把这东西放哪里呢？不好说，所以这里我们到时候肯定要琢磨一下重写掉。
 
-### “拆除 `HardFault` 炸弹”
+## “拆除 `HardFault` 炸弹”
 
-#### 观察错误的 PC 值
+### 观察错误的 PC 值
 
 我们现在锁定了问题，在 `__init_array_start` 数组中到底存在什么东西？
 导致 MCU 调用这里的程序后就触发了异常？
@@ -1114,7 +1120,7 @@ Makefile 编译的文件，VirtAddr 和 PhysAddr 不一致，但是 Zig 编译�
 
 ![][STM32-参考手册-BOOT配置]
 
-#### Cortex M4 启动流程
+### Cortex M4 启动流程
 
 但问题是，Cortex-M4 的复位启动流程是什么？
 明明之前都是在 `0x0800 xxxx` 执行的代码，怎么一下子跳到 `0x0001 ffff` 了？
@@ -1128,7 +1134,7 @@ Makefile 编译的文件，VirtAddr 和 PhysAddr 不一致，但是 Zig 编译�
 但是，为什么函数的入口点就会在 `0x0800 0251` 呢？为什么不可以从 `0x000 0008` 开始呢？
 这就要请出链接脚本了。
 
-#### 链接脚本 (.ld/.lds) 简介
+### 链接脚本 (.ld/.lds) 简介
 
 那么链接脚本是干什么的？或者说在裸机环境下如何构造内存布局？
 
@@ -1151,6 +1157,7 @@ OS 负责将一个个程序加载进入内存里面去执行。
 顺带说一下：
 - VMA（Virtual Memory Address）：程序运行时的地址（即 VirtualAddr）
 - LMA（Load Memory Address）：程序加载时的地址（即 PhysicAddr）
+这两者的更详细介绍可以参考此[文档][lma-vma]
 
 我们来分析一下 STM32CubeMX 生成的链接脚本，以辅助大家理解。
 
@@ -1161,7 +1168,7 @@ OS 负责将一个个程序加载进入内存里面去执行。
 ENTRY(Reset_Handler)
 ```
 
-下面这段指示 RAM 和 FLASH 的起始位置和长度，同时声明只有 RAM 是可执行的：
+下面这段指示 RAM 和 FLASH 的起始位置和长度：
 
 r：可读；w：可写；x：可执行
 
@@ -1202,7 +1209,7 @@ SECTIONS
 }
 ```
 
-#### LMA, VMA，以及 `HardFault` 破案
+### LMA, VMA，以及 `HardFault` 破案
 
 这个时候我们之前提到的 VMA 和 LMA 的概念就派上用场了：
 
@@ -1246,9 +1253,19 @@ Zig 编译产物，LMA == VMA，因此不会将 Flash 内容复制到 RAM 中，
 
 从而保证把烧录的东西存到 FLASH 即可。此时再编译烧录，就不会触发 `HardFault` 了。
 
-此外我们发现 Makefile 的版本没有提供 `__preinit_array_start` 和 `__init_array_start`，
-它只调用了 `_init()`，
-因此其实也可以把汇编启动文件的 `bl __libc_init_array` 换成 `bl _init`，效果是一样的，不用改链接脚本。
+> 此外我们发现 Makefile 的版本没有提供 `__preinit_array_start` 和 `__init_array_start`，
+> 它只调用了 `_init()`，
+> 因此其实也可以把汇编启动文件的 `bl __libc_init_array` 换成 `bl _init`，效果是一样的，不用改链接脚本。
+> 但我个人不建议这么改，因为这只是 C 环境下没有 `__init_array_start` 的存在，如果引入 C++ 则不好说是否存在。
+
+打个补丁，上面引用起来的原文观点是错误的，
+Makefile 之所以不包含这两个，是因为我们删除了所有包含 READONLY 关键字的段，见下文。
+
+此外 CubeMX 生成代码之后会尝试覆盖 ld 脚本和汇编文件，建议将 ld 脚本移出 xxx.ioc 文件所在目录。
+
+然后我生成了一次之后才发现，原来 CubeMX 早就给我们定义好了，只是因为之前的 READONLY 关键字报错，我们全给删了，白忙活了……，不过也好，至少现在你学会了如何调试 `HardFault`。
+
+**现在更正一下，解决方案是修正前项引用并仅删除所有 READONLY 关键字，然后将 ld 脚本移出 xxx.ioc 所在目录**。
 
 此外我们来看下两个文件的大小吧：
 
@@ -1271,7 +1288,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 5.34765625
 ```
 
-### 加入 Zig 代码
+## 加入 Zig 代码
 
 接下来我们来写 `src/main.zig`：
 
@@ -1348,9 +1365,9 @@ Warn : no flash bank found for address 0x2000005c
 </video>
 
 
-## 附录
+# 附录
 
-### 对链接过程和内存分配的更加细致的观察
+## 对链接过程和内存分配的更加细致的观察
 
 现在我们知道了 `ENTRY` 指定了程序的入口为 `Reset_Handler`，
 也就是我们查看堆栈时第一个执行的函数。
@@ -1484,8 +1501,7 @@ Reset_Handler:
 `_mainCRTStartup` 的 `bl 80004bc <main>` 开始一路执行到结束？
 这个问题我打算挖个坑，可能永远都不会更新（笑）
 
-
-### Zig 语言的一些介绍
+## Zig 语言的一些介绍
 
 和 Python 的 `import this` 一样，Zig 也有自己的 Zig 之禅。
 
@@ -1776,6 +1792,6 @@ Zig 是一个还没 1.0 的语言，并且 0.16 还大改了 0.15 的一些 API�
 [impl-of-__libc_init_array-1]: https://web.archive.org/web/20161113155513/http://newlib.sourcearchive.com/documentation/1.18.0/init_8c-source.html
 [impl-of-__libc_init_array-2]: https://static.grumpycoder.net/pixel/uC-sdk-doc/initfini_8c_source.html
 [cortexm4-xpsr]: https://blog.csdn.net/kouxi1/article/details/122914131
-[lma-vma]: https://www.cnblogs.com/blogernice/articles/9856216.html
+[lma-vma]: https://sourceware.org/binutils/docs/ld/Basic-Script-Concepts.html
 [self-template-opensource]: https://github.com/aliferne/STM32G431-Zig-Framework
 
