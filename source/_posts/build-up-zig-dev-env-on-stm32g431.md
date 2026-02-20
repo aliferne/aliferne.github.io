@@ -1267,6 +1267,15 @@ Makefile 之所以不包含这两个，是因为我们删除了所有包含 READ
 
 **现在更正一下，解决方案是修正前项引用并仅删除所有 READONLY 关键字，然后将 ld 脚本移出 xxx.ioc 所在目录**。
 
+此外非常感谢微信用户 @海石生风 打的补丁：
+
+![][微信用户海石生风打的补丁]
+
+如果我们借助 `exe.entry = . { .symbol_name = "Reset_Handler" }` 的话，
+可以将 Zig 编译出来的 `_mainCRTStartup` 这套初始化逻辑重定向，这样子 Zig 编译产物就只有一套初始化逻辑了，对 `_mainCRTStartup` 的分析见[附录](#对链接过程和内存分配的更加细致的观察).
+
+Zig lld 并不总是遵守我们的 ld 脚本，这点挺让人讨厌的。
+
 此外我们来看下两个文件的大小吧：
 
 ```bash
@@ -1778,6 +1787,7 @@ Zig 是一个还没 1.0 的语言，并且 0.16 还大改了 0.15 的一些 API�
 [CortexM4权威指南-SCB-HFSR等寄存器]: /images/build-up-zig-dev-env-on-stm32g431/CortexM4权威指南-HFSR等寄存器.png
 [CortexM4权威指南-复位流程]: /images/build-up-zig-dev-env-on-stm32g431/CortexM4权威指南-复位流程.png
 [ZIG-BUILD-SUCCESS]: /images/build-up-zig-dev-env-on-stm32g431/[ZIG-BUILD]-Success.mp4
+[微信用户海石生风打的补丁]: /images/build-up-zig-dev-env-on-stm32g431/微信用户海石生风打的补丁.jpg
 
 <p style="display:none">参考资料：</p>
 
