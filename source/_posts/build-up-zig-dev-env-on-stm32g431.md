@@ -855,6 +855,10 @@ __libc_init_array (void)
 ### 文件头分析
 
 ```bash
+# 注意这里的 Entry point address 的 Bit[0] 是 1
+# 这是因为 Cortex M4 工作在 Thumb 模式下
+# 该模式要求 PC 和 SP 的 Bit[0] = 1
+# 见 ST Cortex M4 编程手册（PM0214）的 3.3.2 小节
 ❯ $are -h $make_elf
 ELF Header:
   Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00 
@@ -1271,8 +1275,12 @@ Makefile 之所以不包含这两个，是因为我们删除了所有包含 READ
 
 ![][微信用户海石生风打的补丁]
 
-如果我们借助 `exe.entry = . { .symbol_name = "Reset_Handler" }` 的话，
-可以将 Zig 编译出来的 `_mainCRTStartup` 这套初始化逻辑重定向，这样子 Zig 编译产物就只有一套初始化逻辑了，对 `_mainCRTStartup` 的分析见[附录](#对链接过程和内存分配的更加细致的观察).
+ta 所说的  `_start` 为入口点是错误的（我们这里不是，但如果自己写个文件 `pub fn main() void {}`， 然后再 `zig build-exe file.zig` 之后分析出来就是，因为引入了上面提到的几个 crt 文件），
+但是 ta 所说的重定向方法是对的，
+如果我们借助 `exe.entry = . { .symbol_name = "Reset_Handler" };`，
+可以将 Zig 编译出来的 `_mainCRTStartup` 这套初始化逻辑重定向，
+这样子 Zig 编译产物就只有一套初始化逻辑了，
+对 `_mainCRTStartup` 的分析见[附录](#对链接过程和内存分配的更加细致的观察).
 
 Zig lld 并不总是遵守我们的 ld 脚本，这点挺让人讨厌的。
 
@@ -1386,7 +1394,9 @@ Warn : no flash bank found for address 0x2000005c
 所以它会先初始化 C 运行时（即初始化堆栈等）：
 
 ```bash
-# 这里需要四字节对齐，因此不是 grep 08000251，下同
+# 由于 Cortex-M4 跑在 Thumb 指令集下，PC 值会等于起始地址 + 1
+# + 1 用于指示为 Thumb 指令集，我们需要手动 - 1 来 grep
+# 我们在文件头分析处简要提过这个问题
 ❯ $aod -S $zig_elf | grep -i 20 "08000250"
 08000250 <_mainCRTStartup>:
 ```
@@ -1394,9 +1404,8 @@ Warn : no flash bank found for address 0x2000005c
 而在 Makefile 编译的版本中，就的的确确是 `Reset_Handler` 在文件入口处：
 
 ```bash
-❯ $aod -S $make_elf | grep -i "8001ba8"
+❯ $aod -S $make_elf | grep -i "08001ba8"
 08001ba8 <Reset_Handler>:
- 8001ba8:       480d            ldr     r0, [pc, #52]   @ (8001be0 <LoopForever+0x2>)
 ```
 
 由于 `Reset_Handler` 就在汇编启动文件中躺着，我们也可以来看下是什么情况：
