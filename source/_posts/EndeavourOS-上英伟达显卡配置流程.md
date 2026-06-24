@@ -5,8 +5,6 @@ categories:
 - linux
 tags:
 - linux
-- archlinux
-- endeavourOS
 - nvidia
 ---
 

@@ -4,9 +4,7 @@ date: 2026-02-17 18:00:00
 categories:
 - embedded
 tags:
-- embedded
 - mcu
-- stm32
 - zig
 - c
 ---
