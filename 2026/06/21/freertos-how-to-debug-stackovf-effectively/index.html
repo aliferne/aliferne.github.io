@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="blogs, github, ferne, aliferne">
+    
+    <meta name="author" content="Ferne">
+    
+    <!-- Completely eliminate flash of wrong theme -->
+    <script>
+        (function() {
+            const THEME_KEY = "REDEFINE-THEME-STATUS";
+            const DARK = "dark", LIGHT = "light";
+            
+            // Get preferred theme
+            function getTheme() {
+                try {
+                    const saved = localStorage.getItem(THEME_KEY);
+                    if (saved) {
+                        const { isDark } = JSON.parse(saved);
+                        return isDark ? DARK : LIGHT;
+                    }
+                } catch (e) {}
+                
+                return matchMedia("(prefers-color-scheme: dark)").matches ? DARK : LIGHT;
+            }
+            
+            // Apply theme to document
+            function applyTheme(theme) {
+                const isDark = theme === DARK;
+                const root = document.documentElement;
+                
+                // Set data attribute for CSS variables
+                root.setAttribute("data-theme", theme);
+                
+                // Set classes for compatibility
+                root.classList.add(theme);
+                root.classList.remove(isDark ? LIGHT : DARK);
+                root.style.colorScheme = theme;
+            }
+            
+            // Initial application
+            const theme = getTheme();
+            applyTheme(theme);
+            
+            // Listen for system preference changes
+            matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ({ matches }) => {
+                // Only update if using system preference (no localStorage entry)
+                if (!localStorage.getItem(THEME_KEY)) {
+                    applyTheme(matches ? DARK : LIGHT);
+                }
+            });
+            
+            // Set body classes once DOM is ready
+            if (document.readyState !== "loading") {
+                document.body.classList.add(theme + "-mode");
+            } else {
+                document.addEventListener("DOMContentLoaded", () => {
+                    document.body.classList.add(theme + "-mode");
+                    document.body.classList.remove((theme === DARK ? LIGHT : DARK) + "-mode");
+                });
+            }
+        })();
+    </script>
+    
+    <!-- Critical CSS to prevent flash -->
+    <style>
+        :root[data-theme="dark"] {
+            --background-color: #202124;
+            --background-color-transparent: rgba(32, 33, 36, 0.6);
+            --second-background-color: #2d2e32;
+            --third-background-color: #34353a;
+            --third-background-color-transparent: rgba(32, 33, 36, 0.6);
+            --primary-color: #0066CC;
+            --first-text-color: #ffffff;
+            --second-text-color: #eeeeee;
+            --third-text-color: #bebec6;
+            --fourth-text-color: #999999;
+            --default-text-color: #bebec6;
+            --invert-text-color: #373D3F;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --selection-color: #0066CC;
+            --shadow-color-1: rgba(255, 255, 255, 0.08);
+            --shadow-color-2: rgba(255, 255, 255, 0.05);
+        }
+        
+        :root[data-theme="light"] {
+            --background-color: #fff;
+            --background-color-transparent: rgba(255, 255, 255, 0.6);
+            --second-background-color: #f8f8f8;
+            --third-background-color: #f2f2f2;
+            --third-background-color-transparent: rgba(241, 241, 241, 0.6);
+            --primary-color: #0066CC;
+            --first-text-color: #16171a;
+            --second-text-color: #2f3037;
+            --third-text-color: #5e5e5e;
+            --fourth-text-color: #eeeeee;
+            --default-text-color: #373D3F;
+            --invert-text-color: #bebec6;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --selection-color: #0066CC;
+            --shadow-color-1: rgba(0, 0, 0, 0.08);
+            --shadow-color-2: rgba(0, 0, 0, 0.05);
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--default-text-color);
+        }
+        
+        /* Apply body classes as soon as DOM is ready */
+        :root[data-theme="dark"] body {
+            background-color: var(--background-color);
+            color: var(--default-text-color);
+        }
+    </style>
+    
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="http://aliferne.github.io/2026/06/21/freertos-how-to-debug-stackovf-effectively/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+    
+        
+        <meta name="description" content="Hexo Theme Redefine, Redefine Your Hexo Journey.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何在 FreeRTOS 中高效调试栈溢出错误">
+<meta property="og:url" content="http://aliferne.github.io/2026/06/21/freertos-how-to-debug-stackovf-effectively/index.html">
+<meta property="og:site_name" content="Ferne 的编程小屋">
+<meta property="og:description" content="Hexo Theme Redefine, Redefine Your Hexo Journey.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://aliferne.github.io/images/redefine-og.webp">
+<meta property="article:published_time" content="2026-06-21T05:42:34.000Z">
+<meta property="article:modified_time" content="2026-06-24T09:43:24.602Z">
+<meta property="article:author" content="Ferne">
+<meta property="article:tag" content="mcu">
+<meta property="article:tag" content="rtos">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://aliferne.github.io/images/redefine-og.webp">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/amiya-avator.jpg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/amiya-avator.jpg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/amiya-avator.jpg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            如何在 FreeRTOS 中高效调试栈溢出错误 | Ferne 的编程小屋
+        
+    </title>
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        
+<link rel="stylesheet" href="/css/build/tailwind.css">
+
+    
+
+    
+<link rel="stylesheet" href="/fonts/GeistMono/geist-mono.css">
+
+    
+<link rel="stylesheet" href="/fonts/Geist/geist.css">
+
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"aliferne.github.io","root":"/","language":"zh_CN"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"3.2rem","h2":"2.4rem","h3":"1.9rem","h4":"1.6rem","h5":"1.4rem","h6":"1.3rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":false,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":true,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":{"enable":false,"custom_message":null},"side_tools":{"gear_rotation":true,"auto_expand":false},"open_graph":{"enable":true,"image":"/images/redefine-og.webp","description":"Hexo Theme Redefine, Redefine Your Hexo Journey."},"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/wallhaven-wqery6-light.webp","dark":"/images/wallhaven-wqery6-dark.webp"},"title":"欢迎来到我的个人博客","subtitle":{"text":["Die Melodie von Null und Eins."],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":false,"style":"default","links":{"github":"https://github.com/aliferne","instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"11.4.1"}},"version":"2.8.5","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"}},"search":{"enable":false,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":null,"show_on_mobile":true,"links":null},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    window.lang_ago = {"second":"%s seconds ago","minute":"%s minutes ago","hour":"%s hours ago","day":"%s days ago","week":"%s weeks ago","month":"%s months ago","year":"%s years ago"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+
+<body>
+	<div class="progress-bar-container">
+	
+	<span class="scroll-progress-bar"></span>
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+                <a class="logo-image h-8 w-8 sm:w-10 sm:h-10 mr-3" href="/">
+                    <img src="/images/amiya-avator.jpg" class="w-full h-full rounded-xs">
+                </a>
+            
+            <a class="logo-title" href="/">
+                
+                Ferne 的编程小屋
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    INICIO
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                INICIO
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">6</div>
+        <div class="label text-third-text-color text-sm">Etiquetas</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">2</div>
+        <div class="label text-third-text-color text-sm">Categorías</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">4</div>
+        <div class="label text-third-text-color text-sm">Publicaciones</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			<div class="w-full flex items-center pt-6 justify-start">
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">如何在 FreeRTOS 中高效调试栈溢出错误</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] flex-shrink-0 rounded-medium border border-border-color p-[1px]">
+				<img src="/images/amiya-avator.jpg">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">Ferne</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv1</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2026-06-21 13:42:34</span>
+        <span class="mobile">2026-06-21 13:42:34</span>
+        <span class="hover-info">Creado</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-06-24 17:43:24</span>
+            <span class="mobile">2026-06-24 17:43:24</span>
+            <span class="hover-info">Actualizado</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/embedded/">embedded</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/mcu/">mcu</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/rtos/">rtos</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>打完比赛之后感到无事可做，因此最近正在自己 DIY 一个掌上阅读器，为了更好地<del>折磨</del>提升自己，决定引入一堆自己以前几乎从来没学过的东西，并且还尝试学 Linux 驱动代码的风格去做一个芯片无关的 BSP 层，不过这些不会是这篇文章的重点，等这个项目完工之后应该会整理文档并发博客，不过那都是后话了。</p>
+<p>本文将分为上下两篇，上篇你会学到：</p>
+<ol>
+<li>如何判断栈溢出、推算栈的占用情况</li>
+<li>掌握 FreeRTOS 针对堆栈溢出检测的钩子函数</li>
+</ol>
+<p>而在下篇，我们则会聚焦于：</p>
+<ol>
+<li>Cortex-M4 内核的编程模型与错误处理机制</li>
+<li>FreeRTOS 的内核初始化与上下文切换逻辑</li>
+</ol>
+<p>本文的下篇同时可视为对之前 <a href="https://aliferne.github.io/2026/02/17/build-up-zig-dev-env-on-stm32g431/">STM32 搭建 Zig 开发环境</a> 理论部分的详细补充。</p>
+<h2 id="事故代码"><a href="#事故代码" class="headerlink" title="事故代码"></a>事故代码</h2><p>那么就先介绍下这个问题的背景吧，由于掌上阅读器肯定需要 UI 和 SD 卡，所以我就<strong>引入了 LVGL 和 FatFs</strong>，而因为我雄心相对较大（这不完全只是一个掌上阅读器），所以还<strong>引入了 FreeRTOS</strong>，不过我的水平只局限于能创建一些任务，这个项目也顺带附带着我学习高级用法的想法。</p>
+<p>之后我为了测试方便就索性一股脑全写到 ui_task.c 文件中，下面是源代码：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">StartUITask</span><span class="params">(<span class="type">void</span> <span class="type">const</span> *argument)</span></span><br><span class="line">&#123;</span><br><span class="line">    lv_init();</span><br><span class="line">    lv_port_disp_init();</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 文件操作部分 ------------------------- */</span></span><br><span class="line">    FIL fp;</span><br><span class="line">    <span class="comment">/* 本质是 f_open */</span></span><br><span class="line">    FRESULT res = storage_open(&amp;sdcard, &amp;fp, <span class="string">&quot;test.txt&quot;</span>, FA_READ | FA_OPEN_EXISTING);</span><br><span class="line">    UINT fnum   = <span class="number">0</span>;</span><br><span class="line">    ASSERT_FAIL(res != FR_OK,</span><br><span class="line">                <span class="comment">/* 本质是 f_close */</span></span><br><span class="line">                storage_close(&amp;fp);</span><br><span class="line">                <span class="comment">/* 本质是 vTaskDelay(1000); */</span></span><br><span class="line">                <span class="keyword">for</span> (;;) &#123; os_delay_ms(<span class="number">1000</span>); &#125;);</span><br><span class="line">    <span class="comment">/* 本质是 f_read */</span></span><br><span class="line">    res = storage_read(&amp;fp, buf, LEN(buf), &amp;fnum);</span><br><span class="line">    ASSERT_FAIL(res != FR_OK,</span><br><span class="line">                storage_close(&amp;fp);</span><br><span class="line">                <span class="keyword">for</span> (;;) &#123; os_delay_ms(<span class="number">1000</span>); &#125;);</span><br><span class="line">    storage_close(&amp;fp);</span><br><span class="line">    <span class="comment">/* 文件操作部分 End ------------------------- */</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* UI 部分 ------------------------- */</span></span><br><span class="line">    <span class="type">static</span> <span class="type">lv_style_t</span> style;</span><br><span class="line">    lv_style_init(&amp;style);</span><br><span class="line">    lv_style_set_radius(&amp;style, <span class="number">5</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*Make a gradient*/</span></span><br><span class="line">    lv_style_set_width(&amp;style, <span class="number">128</span>);</span><br><span class="line">    lv_style_set_height(&amp;style, LV_SIZE_CONTENT);</span><br><span class="line"></span><br><span class="line">    lv_style_set_pad_ver(&amp;style, <span class="number">0</span>);</span><br><span class="line">    lv_style_set_pad_left(&amp;style, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    lv_style_set_x(&amp;style, lv_pct(<span class="number">0</span>));</span><br><span class="line">    lv_style_set_y(&amp;style, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*Create an object with the new style*/</span></span><br><span class="line">    <span class="type">lv_obj_t</span> *obj = lv_obj_create(lv_scr_act());</span><br><span class="line">    lv_obj_add_style(obj, &amp;style, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="type">lv_obj_t</span> *label = lv_label_create(obj);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] != <span class="number">0</span>)</span><br><span class="line">        lv_label_set_text(label, buf);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        lv_label_set_text(label, <span class="string">&quot;确认&quot;</span>);</span><br><span class="line">    <span class="comment">/* UI 部分 End ------------------------- */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        <span class="comment">/* 以约 500ms 的周期闪烁 LED */</span></span><br><span class="line">        gpio_toggle(&amp;usr_led);</span><br><span class="line"></span><br><span class="line">        lv_timer_handler();</span><br><span class="line">        os_delay_ms(<span class="number">500</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>其中 <code>ASSERT_FAIL</code> 是一个自己写的很简单的宏：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 失败断言宏，断言 cond 一定为假，否则执行 actions 操作 */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> ASSERT_FAIL(cond, actions) \</span></span><br><span class="line"><span class="meta">    do &#123;                           \</span></span><br><span class="line"><span class="meta">        <span class="keyword">if</span> ((cond)) &#123;              \</span></span><br><span class="line"><span class="meta">            actions;               \</span></span><br><span class="line"><span class="meta">        &#125;                          \</span></span><br><span class="line"><span class="meta">    &#125; while (0)</span></span><br></pre></td></tr></table></figure></div>
+
+<p>而任务创建函数则为：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">osThreadDef(UITask, StartUITask, osPriorityNormal, <span class="number">0</span>, <span class="number">512</span>);</span><br><span class="line">UITaskHandle = osThreadCreate(osThread(UITask), <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure></div>
+
+<p>相信一看代码，老手基本就知道是什么情况了，<strong>确实就是栈分配得不够</strong>，不过还是想请你们看我的一整套 Debug 流程，做一个抛砖引玉的作用，希望能够得到高人的指导，比如更快定位问题的方法，一些 Debug 的方法论等等，在此谢谢大家了。</p>
+<h2 id="事故现场复现"><a href="#事故现场复现" class="headerlink" title="事故现场复现"></a>事故现场复现</h2><p>本次事故的表现是 LED 灯不闪烁，而屏幕可以正常显示。</p>
+<p>这个名为 test.txt 的文件是存在的，因此不存在卡死在一开始的 <code>for</code> 循环的情况，而读取操作完全正常， 而 UI 界面可以显示文件内容，这就使我犯了难，至少表面上看起来不像是代码问题，不过还是得看下代码的。</p>
+<p>由于其他任务均为空实现，我因此最先怀疑的就是 ui_task 的代码问题，上面代码很明显可以分为两部分操作，一部分是文件 IO，另一部分是 UI 绘制，我在源代码上均做了标注，我的测试有三个步骤：</p>
+<ol>
+<li>注释 <em>文件 IO</em> 和 <em>UI 绘制</em>, 烧录发现 LED 正常闪烁，进入 debug 发现上下文正常切换</li>
+<li>注释 <em>文件 IO</em>, 烧录发现 LED 无法闪烁，进入 debug 发现触发 HardFault</li>
+<li>注释 <em>UI 绘制</em>, 现象同第一次尝试</li>
+</ol>
+<p>到这里基本可以确定肯定是 LVGL 啥的有点问题，不过不可能怀疑到人家源代码上，<del>毕竟人家水平比我高多了</del>所以没办法，也只能进 Debug 看堆栈了。</p>
+<p>我的断点设置在两句 <code>ASSERT_FAIL</code> 处，以及最后 <code>for</code> 循环的三个函数内。逐步执行，两句宏的断言均通过，而最后在 <code>os_delay_ms(500)</code> 处，按步执行之后不再正常进入此任务，而正常来说应当会从 <code>gpio_toggle</code> 再度执行循环内函数。</p>
+<p>我们继续 debug，按下暂停，发现进了 <code>HardFault_Handler</code>，而 HardFault 一般都会跟内存访问，或者写了一些不该写的东西之类的有关，根据上面的测试情况，我们很容易想到注释一些东西之后执行的内容会变少，也就是栈空间占用变少，那么我们就来计算一下栈空间的使用情况吧。</p>
+<h2 id="计算堆栈调用情况"><a href="#计算堆栈调用情况" class="headerlink" title="计算堆栈调用情况"></a>计算堆栈调用情况</h2><p>我们先来看这个 <code>FIL</code>，它是个结构体：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">	FFOBJID	obj;		<span class="comment">/* Object identifier (must be the 1st member to detect invalid object pointer) */</span></span><br><span class="line">	BYTE	flag;		<span class="comment">/* File status flags */</span></span><br><span class="line">	BYTE	err;		<span class="comment">/* Abort flag (error code) */</span></span><br><span class="line">	FSIZE_t	fptr;		<span class="comment">/* File read/write pointer (0 on open) */</span></span><br><span class="line">	DWORD	clust;		<span class="comment">/* Current cluster of fptr (invalid when fptr is 0) */</span></span><br><span class="line">	LBA_t	sect;		<span class="comment">/* Sector number appearing in buf[] (0:invalid) */</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !FF_FS_READONLY</span></span><br><span class="line">	LBA_t	dir_sect;	<span class="comment">/* Sector number containing the directory entry (not used in exFAT) */</span></span><br><span class="line">	BYTE*	dir_ptr;	<span class="comment">/* Pointer to the directory entry in the win[] (not used in exFAT) */</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> FF_USE_FASTSEEK</span></span><br><span class="line">	DWORD*	cltbl;		<span class="comment">/* Pointer to the cluster link map table (nulled on open; set by application) */</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> !FF_FS_TINY</span></span><br><span class="line">	BYTE	buf[FF_MAX_SS];	<span class="comment">/* File private data read/write window */</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">&#125; FIL;</span><br></pre></td></tr></table></figure></div>
+
+<p>由于这里面的宏全都是满足条件的，即所有的变量都被启用了，我们需要全部计算：</p>
+<p>首先是第一部分：<br><code>BYTE + BYTE + DWORD + BYTE* + DWORD* + BYTE * FF_MAX_SS</code></p>
+<p>32 位单片机的地址是 32 位的，所以是四个字节，那么对于第一部分就有：<br>1 + 1 + 4 + 4 + 4 + 1 * 512 &#x3D; 526</p>
+<p>然后第二部分：<br><code>FFOBJID + FSIZE_t + LBA_t + LBA_t</code></p>
+<p>其中 <code>FFOBJID = FATFS* + WORD + BYTE + BYTE + DWORD + FSIZE_t + DWORD * 5</code> (我没启用 <code>FF_FS_LOCK</code> 宏)</p>
+<p>那么就是：<br>(4 + 2 + 1 + 1 + 4 + 8 + 4 * 5) + 8 + 4 + 4 &#x3D; 56</p>
+<p>两部分合起来为 582 Bytes，这是理论值，我们没考虑结构体对齐的问题，实际会更大些。<br>如果你使用 Vscode + Clangd 插件的话，借助 <code>sizeof</code> 然后鼠标悬浮一下就可以看到值的大小，我这里显示为 600 Bytes.</p>
+<p>更加准确的做法是：</p>
+<div class="code-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">arm-none-eabi-objdump -d ./build/Self-DIY-Kindle/Self-DIY-Kindel.elf --disassemble=StartUITask</span><br></pre></td></tr></table></figure></div>
+
+<p>然后找到这一行：</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">0803067c &lt;StartUITask&gt;:</span><br><span class="line"> 803067c:	b530      	push	&#123;r4, r5, lr&#125;</span><br><span class="line"> 803067e:	f5ad 7d19 	sub.w	sp, sp, #612	@ 0x264</span><br></pre></td></tr></table></figure></div>
+
+<p>这里的 612 是实际占用堆栈的大小，汇编码为 <code>sub.w</code> 表示其是宽字节（32位的）。<br>这里分配了 612 Bytes</p>
+<p>剩下的是函数调用，实际上不好估算，根据函数调用堆栈的模型，我们<strong>需要找到调用链最深的</strong>，因为这个估算起来太麻烦了我们就不找了。</p>
+<h2 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h2><p>很简单，因为我们确定了直接原因是栈溢出，那么只要把 <code>FIL</code> 变成全局变量，让它到 bss 段去占整个 Flash 的空间，别挤在栈里基本就差不多了，如果还不放心则可以给任务分配大点栈空间。</p>
+<h2 id="简易方法实现栈溢出检测"><a href="#简易方法实现栈溢出检测" class="headerlink" title="简易方法实现栈溢出检测"></a>简易方法实现栈溢出检测</h2><p>上面那一套算来算去还要看反汇编的太麻烦了，并且我还发现如果没有 <code>FIL</code> 这个变量，连 <code>sub.w sp</code> 这个操作都不会有，就会更难看出栈大小，而我闲着无聊翻 FreeRTOS 的文档的时候偶然发现一个<a class="link"   target="_blank" rel="noopener" href="https://w.freertos.org/zh-cn-cmn-s/Documentation/02-Kernel/02-Kernel-features/09-Memory-management/02-Stack-usage-and-stack-overflow-checking" >简便的方法<i class="fa-solid fa-arrow-up-right ml-[0.2em] font-light align-text-top text-[0.7em] link-icon"></i></a>.</p>
+<p>简单总结一下就是人家提供了 <code>configCHECK_FOR_STACK_OVERFLOW</code> 宏的配置（CubeMX 有这个配置选项，不过默认是 Disable，所以我看 config 文件的时候一直以为没有对应的调试方法，还是得多看文档啊），通过定义为不同的数值来对应设置如何检查堆栈溢出情况，并通过如下钩子函数：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">vApplicationStackOverflowHook</span><span class="params">( TaskHandle_t xTask,</span></span><br><span class="line"><span class="params">                                    <span class="type">char</span> *pcTaskName )</span>;</span><br></pre></td></tr></table></figure></div>
+
+<p>来执行你自定义的调试信息。</p>
+<p>我给这个宏设置为了 1, 则对应应该是这段代码被启用：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span>( ( configCHECK_FOR_STACK_OVERFLOW == 1 ) &amp;&amp; ( portSTACK_GROWTH &lt; 0 ) )</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/* Only the current stack state is to be checked. */</span></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> taskCHECK_FOR_STACK_OVERFLOW()																\</span></span><br><span class="line"><span class="meta">	&#123;																									\</span></span><br><span class="line"><span class="meta">		<span class="comment">/* Is the currently saved stack pointer within the stack limit? */</span>								\</span></span><br><span class="line"><span class="meta">		<span class="keyword">if</span>( pxCurrentTCB-&gt;pxTopOfStack <span class="string">&lt;= pxCurrentTCB-&gt;</span>pxStack )										\</span></span><br><span class="line"><span class="meta">		&#123;																								\</span></span><br><span class="line"><span class="meta">			vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, pxCurrentTCB-&gt;pcTaskName );	\</span></span><br><span class="line"><span class="meta">		&#125;																								\</span></span><br><span class="line"><span class="meta">	&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span> <span class="comment">/* configCHECK_FOR_STACK_OVERFLOW == 1 */</span></span></span><br></pre></td></tr></table></figure></div>
+
+<p>然后自定义逻辑则为：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">vApplicationStackOverflowHook</span><span class="params">(TaskHandle_t xTask,</span></span><br><span class="line"><span class="params">                                   <span class="type">char</span> *pcTaskName)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Stack Overflow! %s\n&quot;</span>, pcTaskName);</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">strcmp</span>(pcTaskName, <span class="string">&quot;UITask&quot;</span>) == <span class="number">0</span>) &#123;</span><br><span class="line">        gpio_write(&amp;usr_led, GPIO_Level_High);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>串口便确实能打印出这个信息，而 LED 也如预想中亮起了（缺省行为是熄灭的）。</p>
+<p>不过这并没有结束，我们目前只知道是栈溢出，对于只想在用 FreeRTOS<br>时定位有无栈溢出的读者来说，这一篇基本上够你用了，但是我不想止步于此，因此我还会定位栈溢出究竟导致了什么，才会使得<br>MCU 触发了 HardFault.<br>非常不幸的是，想要搞清楚这方面的问题，你几乎必然需要了解内核，因此我们在第二篇将会花费大量精力去讲解<br>Cortex-M4<br>内核的一些设计，这势必会劝退很多读者，不过如果你对这类话题感兴趣的话，那么欢迎来观看我的下一篇博客！</p>
+<hr>
+<p style="display:none">参考资料：</p>
+
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>Título:</strong> 如何在 FreeRTOS 中高效调试栈溢出错误</li>
+        <li><strong>Autor:</strong> Ferne</li>
+        <li><strong>Creado el
+                :</strong> 2026-06-21 13:42:34</li>
+        
+            <li>
+                <strong>Actualizado el
+                    :</strong> 2026-06-24 17:43:24
+            </li>
+        
+        <li>
+            <strong>Enlace:</strong> https://aliferne.github.io/2026/06/21/freertos-how-to-debug-stackovf-effectively/
+        </li>
+        <li>
+            <strong>
+                Licencia:
+            </strong>
+            
+
+            
+                Este trabajo está licenciado bajo <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a>.
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/mcu/">#mcu</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/rtos/">#rtos</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			<div class="article-prev border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="prev" rel="prev" href="/2026/06/24/freertos-from-pendsv-to-hardfault/">
+					<span class="left arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-left"></i>
+					</span>
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">FreeRTOS 的上下文切换与栈溢出 —— 从 PendSV 到 HardFault 的调试全流程</span>
+						<span class="post-nav-item">Publicaciones anteriores</span>
+					</span>
+				</a>
+			</div>
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2026/02/17/build-up-zig-dev-env-on-stm32g431/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">[STM32] STM32G431 搭建 Zig 开发环境</span>
+						<span class="post-nav-item">Publicaciones siguientes</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        Comentarios
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.mjs';
+
+      function loadWaline() {
+        init({
+          el: '#waline',
+          serverURL: 'https://example.example.com',
+          dark: 'body[class~="dark-mode"]',
+          reaction: false,
+          requiredMeta: ['nick', 'mail'],
+          emoji: [],
+                    lang: 'zh-CN',
+        });
+      }
+
+      if (typeof swup !== 'undefined') {
+        loadWaline();
+      } else {
+        window.addEventListener('DOMContentLoaded', loadWaline);
+      }
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">En esta página</div>
+		<div class="page-title">如何在 FreeRTOS 中高效调试栈溢出错误</div>
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E6%95%85%E4%BB%A3%E7%A0%81"><span class="nav-text">事故代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E6%95%85%E7%8E%B0%E5%9C%BA%E5%A4%8D%E7%8E%B0"><span class="nav-text">事故现场复现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A1%E7%AE%97%E5%A0%86%E6%A0%88%E8%B0%83%E7%94%A8%E6%83%85%E5%86%B5"><span class="nav-text">计算堆栈调用情况</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95"><span class="nav-text">解决方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E6%98%93%E6%96%B9%E6%B3%95%E5%AE%9E%E7%8E%B0%E6%A0%88%E6%BA%A2%E5%87%BA%E6%A3%80%E6%B5%8B"><span class="nav-text">简易方法实现栈溢出检测</span></a></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">Ferne</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        4 publicaciones en total
+                    </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">CONTADOR DE VISITANTES</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">TOTAL DE VISITAS</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">DESARROLLADO POR <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a></span>
+            <span class="text-sm lg:block">TEMA&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.8.5</a></span>
+        </div>
+        
+        
+            <div>
+                Blog en línea por <span class="odometer" id="runtime_days" ></span> días <span class="odometer" id="runtime_hours"></span> horas <span class="odometer" id="runtime_minutes"></span> Min <span class="odometer" id="runtime_seconds"></span> Seg
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container">
+	<img src="">
+</div>
+
+	
+
+</main>
+
+
+
+<script src="/js/build/libs/Swup.min.js"></script>
+
+<script src="/js/build/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/build/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupScrollPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupPreloadPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+</script>
+
+
+
+
+	
+<script src="/js/build/tools/imageViewer.js" type="module"></script>
+
+<script src="/js/build/utils.js" type="module"></script>
+
+<script src="/js/build/main.js" type="module"></script>
+
+<script src="/js/build/layouts/navbarShrink.js" type="module"></script>
+
+<script src="/js/build/tools/scrollTopBottom.js" type="module"></script>
+
+<script src="/js/build/tools/lightDarkSwitch.js" type="module"></script>
+
+<script src="/js/build/layouts/categoryList.js" type="module"></script>
+
+
+
+
+
+    
+<script src="/js/build/tools/codeBlock.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/layouts/lazyload.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/tools/runtime.js"></script>
+
+    
+<script src="/js/build/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/build/libs/Typed.min.js"></script>
+
+  
+<script src="/js/build/plugins/typed.js" type="module"></script>
+
+
+
+
+
+
+
+
+    
+<script src="/js/build/libs/anime.min.js"></script>
+
+
+
+
+
+    
+<script src="/js/build/tools/tocToggle.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/layouts/toc.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/plugins/tabs.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+<script src="/js/build/libs/moment-with-locales.min.js" data-swup-reload-script=""></script>
+
+
+<script src="/js/build/layouts/essays.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+
+	
+</body>
+
+</html>

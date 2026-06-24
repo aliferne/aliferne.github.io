@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="zh_CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="blogs, github, ferne, aliferne">
+    
+    <meta name="author" content="Ferne">
+    
+    <!-- Completely eliminate flash of wrong theme -->
+    <script>
+        (function() {
+            const THEME_KEY = "REDEFINE-THEME-STATUS";
+            const DARK = "dark", LIGHT = "light";
+            
+            // Get preferred theme
+            function getTheme() {
+                try {
+                    const saved = localStorage.getItem(THEME_KEY);
+                    if (saved) {
+                        const { isDark } = JSON.parse(saved);
+                        return isDark ? DARK : LIGHT;
+                    }
+                } catch (e) {}
+                
+                return matchMedia("(prefers-color-scheme: dark)").matches ? DARK : LIGHT;
+            }
+            
+            // Apply theme to document
+            function applyTheme(theme) {
+                const isDark = theme === DARK;
+                const root = document.documentElement;
+                
+                // Set data attribute for CSS variables
+                root.setAttribute("data-theme", theme);
+                
+                // Set classes for compatibility
+                root.classList.add(theme);
+                root.classList.remove(isDark ? LIGHT : DARK);
+                root.style.colorScheme = theme;
+            }
+            
+            // Initial application
+            const theme = getTheme();
+            applyTheme(theme);
+            
+            // Listen for system preference changes
+            matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ({ matches }) => {
+                // Only update if using system preference (no localStorage entry)
+                if (!localStorage.getItem(THEME_KEY)) {
+                    applyTheme(matches ? DARK : LIGHT);
+                }
+            });
+            
+            // Set body classes once DOM is ready
+            if (document.readyState !== "loading") {
+                document.body.classList.add(theme + "-mode");
+            } else {
+                document.addEventListener("DOMContentLoaded", () => {
+                    document.body.classList.add(theme + "-mode");
+                    document.body.classList.remove((theme === DARK ? LIGHT : DARK) + "-mode");
+                });
+            }
+        })();
+    </script>
+    
+    <!-- Critical CSS to prevent flash -->
+    <style>
+        :root[data-theme="dark"] {
+            --background-color: #202124;
+            --background-color-transparent: rgba(32, 33, 36, 0.6);
+            --second-background-color: #2d2e32;
+            --third-background-color: #34353a;
+            --third-background-color-transparent: rgba(32, 33, 36, 0.6);
+            --primary-color: #0066CC;
+            --first-text-color: #ffffff;
+            --second-text-color: #eeeeee;
+            --third-text-color: #bebec6;
+            --fourth-text-color: #999999;
+            --default-text-color: #bebec6;
+            --invert-text-color: #373D3F;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --selection-color: #0066CC;
+            --shadow-color-1: rgba(255, 255, 255, 0.08);
+            --shadow-color-2: rgba(255, 255, 255, 0.05);
+        }
+        
+        :root[data-theme="light"] {
+            --background-color: #fff;
+            --background-color-transparent: rgba(255, 255, 255, 0.6);
+            --second-background-color: #f8f8f8;
+            --third-background-color: #f2f2f2;
+            --third-background-color-transparent: rgba(241, 241, 241, 0.6);
+            --primary-color: #0066CC;
+            --first-text-color: #16171a;
+            --second-text-color: #2f3037;
+            --third-text-color: #5e5e5e;
+            --fourth-text-color: #eeeeee;
+            --default-text-color: #373D3F;
+            --invert-text-color: #bebec6;
+            --border-color: rgba(0, 0, 0, 0.08);
+            --selection-color: #0066CC;
+            --shadow-color-1: rgba(0, 0, 0, 0.08);
+            --shadow-color-2: rgba(0, 0, 0, 0.05);
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--default-text-color);
+        }
+        
+        /* Apply body classes as soon as DOM is ready */
+        :root[data-theme="dark"] body {
+            background-color: var(--background-color);
+            color: var(--default-text-color);
+        }
+    </style>
+    
+    <!-- preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    
+    <!--- Seo Part-->
+    
+    <link rel="canonical" href="http://aliferne.github.io/2026/06/24/freertos-from-pendsv-to-hardfault/"/>
+    <meta name="robots" content="index,follow">
+    <meta name="googlebot" content="index,follow">
+    <meta name="revisit-after" content="1 days">
+    
+    
+    
+        
+        <meta name="description" content="Hexo Theme Redefine, Redefine Your Hexo Journey.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FreeRTOS 的上下文切换与栈溢出 —— 从 PendSV 到 HardFault 的调试全流程">
+<meta property="og:url" content="http://aliferne.github.io/2026/06/24/freertos-from-pendsv-to-hardfault/index.html">
+<meta property="og:site_name" content="Ferne 的编程小屋">
+<meta property="og:description" content="Hexo Theme Redefine, Redefine Your Hexo Journey.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://aliferne.github.io/images/redefine-og.webp">
+<meta property="article:published_time" content="2026-06-24T09:42:34.000Z">
+<meta property="article:modified_time" content="2026-06-24T09:46:27.039Z">
+<meta property="article:author" content="Ferne">
+<meta property="article:tag" content="mcu">
+<meta property="article:tag" content="rtos">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://aliferne.github.io/images/redefine-og.webp">
+    
+    
+    <!--- Icon Part-->
+    <link rel="icon" type="image/png" href="/images/amiya-avator.jpg" sizes="192x192">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/amiya-avator.jpg">
+    <meta name="theme-color" content="#A31F34">
+    <link rel="shortcut icon" href="/images/amiya-avator.jpg">
+    <!--- Page Info-->
+    
+    <title>
+        
+            FreeRTOS 的上下文切换与栈溢出 —— 从 PendSV 到 HardFault 的调试全流程 | Ferne 的编程小屋
+        
+    </title>
+
+    
+<link rel="stylesheet" href="/fonts/Chillax/chillax.css">
+
+
+    <!--- Inject Part-->
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+        
+<link rel="stylesheet" href="/css/build/tailwind.css">
+
+    
+
+    
+<link rel="stylesheet" href="/fonts/GeistMono/geist-mono.css">
+
+    
+<link rel="stylesheet" href="/fonts/Geist/geist.css">
+
+    <!--- Font Part-->
+    
+    
+    
+    
+    
+    
+
+    <script id="hexo-configurations">
+    window.config = {"hostname":"aliferne.github.io","root":"/","language":"zh_CN"};
+    window.theme = {"articles":{"style":{"font_size":"16px","line_height":1.5,"image_border_radius":"14px","image_alignment":"center","image_caption":false,"link_icon":true,"delete_mask":false,"title_alignment":"left","headings_top_spacing":{"h1":"3.2rem","h2":"2.4rem","h3":"1.9rem","h4":"1.6rem","h5":"1.4rem","h6":"1.3rem"}},"word_count":{"enable":true,"count":true,"min2read":true},"author_label":{"enable":true,"auto":false,"list":[]},"code_block":{"copy":true,"style":"mac","highlight_theme":{"light":"github","dark":"vs2015"},"font":{"enable":false,"family":null,"url":null}},"toc":{"enable":true,"max_depth":3,"number":false,"expand":true,"init_open":true},"copyright":{"enable":true,"default":"cc_by_nc_sa"},"lazyload":true,"pangu_js":false,"recommendation":{"enable":false,"title":"推荐阅读","limit":3,"mobile_limit":2,"placeholder":"/images/wallhaven-wqery6-light.webp","skip_dirs":[]}},"colors":{"primary":"#A31F34","secondary":null,"default_mode":"light"},"global":{"fonts":{"chinese":{"enable":false,"family":null,"url":null},"english":{"enable":false,"family":null,"url":null},"title":{"enable":false,"family":null,"url":null}},"content_max_width":"1000px","sidebar_width":"210px","hover":{"shadow":true,"scale":false},"scroll_progress":{"bar":true,"percentage":true},"website_counter":{"url":"https://cn.vercount.one/js","enable":true,"site_pv":true,"site_uv":true,"post_pv":true},"single_page":true,"preloader":{"enable":false,"custom_message":null},"side_tools":{"gear_rotation":true,"auto_expand":false},"open_graph":{"enable":true,"image":"/images/redefine-og.webp","description":"Hexo Theme Redefine, Redefine Your Hexo Journey."},"google_analytics":{"enable":false,"id":null}},"home_banner":{"enable":true,"style":"fixed","image":{"light":"/images/wallhaven-wqery6-light.webp","dark":"/images/wallhaven-wqery6-dark.webp"},"title":"欢迎来到我的个人博客","subtitle":{"text":["Die Melodie von Null und Eins."],"hitokoto":{"enable":false,"show_author":false,"api":"https://v1.hitokoto.cn"},"typing_speed":100,"backing_speed":80,"starting_delay":500,"backing_delay":1500,"loop":true,"smart_backspace":true},"text_color":{"light":"#fff","dark":"#d1d1b6"},"text_style":{"title_size":"2.8rem","subtitle_size":"1.5rem","line_height":1.2},"custom_font":{"enable":false,"family":null,"url":null},"social_links":{"enable":false,"style":"default","links":{"github":"https://github.com/aliferne","instagram":null,"zhihu":null,"twitter":null,"email":null},"qrs":{"weixin":null}}},"plugins":{"feed":{"enable":false},"aplayer":{"enable":false,"type":"fixed","audios":[{"name":null,"artist":null,"url":null,"cover":null,"lrc":null}]},"mermaid":{"enable":false,"version":"11.4.1"}},"version":"2.8.5","navbar":{"auto_hide":false,"color":{"left":"#f78736","right":"#367df7","transparency":35},"width":{"home":"1200px","pages":"1000px"},"links":{"Home":{"path":"/","icon":"fa-regular fa-house"}},"search":{"enable":false,"preload":true}},"page_templates":{"friends_column":2,"tags_style":"blur"},"home":{"sidebar":{"enable":true,"position":"left","first_item":"menu","announcement":null,"show_on_mobile":true,"links":null},"article_date_format":"auto","excerpt_length":200,"categories":{"enable":true,"limit":3},"tags":{"enable":true,"limit":3}},"footerStart":"2022/8/17 11:45:14"};
+    window.lang_ago = {"second":"%s seconds ago","minute":"%s minutes ago","hour":"%s hours ago","day":"%s days ago","week":"%s weeks ago","month":"%s months ago","year":"%s years ago"};
+    window.data = {"masonry":false};
+  </script>
+    
+    <!--- Fontawesome Part-->
+    
+<link rel="stylesheet" href="/fontawesome/fontawesome.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/brands.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/solid.min.css">
+
+    
+<link rel="stylesheet" href="/fontawesome/regular.min.css">
+
+    
+    
+    
+    
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+
+
+<body>
+	<div class="progress-bar-container">
+	
+	<span class="scroll-progress-bar"></span>
+	
+
+	
+	<span class="pjax-progress-bar"></span>
+	<!--        <span class="swup-progress-icon">-->
+	<!--            <i class="fa-solid fa-circle-notch fa-spin"></i>-->
+	<!--        </span>-->
+	
+</div>
+
+<main class="page-container" id="swup">
+
+	
+
+	<div class="main-content-container flex flex-col justify-between min-h-dvh">
+		<div class="main-content-header">
+			<header class="navbar-container px-6 md:px-12">
+    <div class="navbar-content transition-navbar ">
+        <div class="left">
+            
+                <a class="logo-image h-8 w-8 sm:w-10 sm:h-10 mr-3" href="/">
+                    <img src="/images/amiya-avator.jpg" class="w-full h-full rounded-xs">
+                </a>
+            
+            <a class="logo-title" href="/">
+                
+                Ferne 的编程小屋
+                
+            </a>
+        </div>
+
+        <div class="right">
+            <!-- PC -->
+            <div class="desktop">
+                <ul class="navbar-list">
+                    
+                        
+                            
+
+                            <li class="navbar-item">
+                                <!-- Menu -->
+                                <a class=""
+                                   href="/"
+                                        >
+                                    <i class="fa-regular fa-house fa-fw"></i>
+                                    INICIO
+                                    
+                                </a>
+
+                                <!-- Submenu -->
+                                
+                            </li>
+                    
+                    
+                </ul>
+            </div>
+            <!-- Mobile -->
+            <div class="mobile">
+                
+                <div class="icon-item navbar-bar">
+                    <div class="navbar-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile sheet -->
+    <div class="navbar-drawer h-dvh w-full absolute top-0 left-0 bg-background-color flex flex-col justify-between">
+        <ul class="drawer-navbar-list flex flex-col px-4 justify-center items-start">
+            
+                
+                    
+
+                    <li class="drawer-navbar-item text-base my-1.5 flex flex-col w-full">
+                        
+                        <a class="py-1.5 px-2 flex flex-row items-center justify-between gap-1 hover:!text-primary active:!text-primary text-2xl font-semibold group border-b border-border-color hover:border-primary w-full "
+                           href="/"
+                        >
+                            <span>
+                                INICIO
+                            </span>
+                            
+                                <i class="fa-regular fa-house fa-sm fa-fw"></i>
+                            
+                        </a>
+                        
+
+                        
+                    </li>
+            
+
+            
+            
+        </ul>
+
+        <div class="statistics flex justify-around my-2.5">
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/tags">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">6</div>
+        <div class="label text-third-text-color text-sm">Etiquetas</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/categories">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">2</div>
+        <div class="label text-third-text-color text-sm">Categorías</div>
+    </a>
+    <a class="item tag-count-item flex flex-col justify-center items-center w-20" href="/archives">
+        <div class="number text-2xl sm:text-xl text-second-text-color font-semibold">4</div>
+        <div class="label text-third-text-color text-sm">Publicaciones</div>
+    </a>
+</div>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+		</div>
+
+		<div class="main-content-body transition-fade-up">
+			
+
+			<div class="main-content">
+				<div class="post-page-container flex relative justify-between box-border w-full h-full">
+	<div class="article-content-container">
+
+		<div class="article-title relative w-full">
+			
+			<div class="w-full flex items-center pt-6 justify-start">
+				<h1 class="article-title-regular text-second-text-color tracking-tight text-4xl md:text-6xl font-semibold px-2 sm:px-6 md:px-8 py-3">FreeRTOS 的上下文切换与栈溢出 —— 从 PendSV 到 HardFault 的调试全流程</h1>
+			</div>
+			
+		</div>
+
+		
+		<div class="article-header flex flex-row gap-2 items-center px-2 sm:px-6 md:px-8">
+			<div class="avatar w-[46px] h-[46px] flex-shrink-0 rounded-medium border border-border-color p-[1px]">
+				<img src="/images/amiya-avator.jpg">
+			</div>
+			<div class="info flex flex-col justify-between">
+				<div class="author flex items-center">
+					<span class="name text-default-text-color text-lg font-semibold">Ferne</span>
+					
+					<span class="author-label ml-1.5 text-xs px-2 py-0.5 rounded-small text-third-text-color border border-shadow-color-1">Lv1</span>
+					
+				</div>
+				<div class="meta-info">
+					<div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fa-regular fa-pen-fancy"></i>&nbsp;
+        <span class="desktop">2026-06-24 17:42:34</span>
+        <span class="mobile">2026-06-24 17:42:34</span>
+        <span class="hover-info">Creado</span>
+    </span>
+    
+        <span class="article-date article-meta-item">
+            <i class="fa-regular fa-wrench"></i>&nbsp;
+            <span class="desktop">2026-06-24 17:46:27</span>
+            <span class="mobile">2026-06-24 17:46:27</span>
+            <span class="hover-info">Actualizado</span>
+        </span>
+    
+
+    
+        <span class="article-categories article-meta-item">
+            <i class="fa-regular fa-folders"></i>&nbsp;
+            <ul>
+                
+                
+                    
+                        
+                        <li>
+                            <a href="/categories/embedded/">embedded</a>&nbsp;
+                        </li>
+                    
+                    
+                
+            </ul>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fa-regular fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/mcu/">mcu</a>&nbsp;
+                    </li>
+                
+                    <li>
+                        | <a href="/tags/rtos/">rtos</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fa-regular fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
+    
+</div>
+
+				</div>
+			</div>
+		</div>
+		
+
+		
+
+
+		<div class="article-content markdown-body px-2 sm:px-6 md:px-8 pb-8">
+			<p>让我们<a href="https://aliferne.github.io/2026/06/21/freertos-how-to-debug-stackovf-effectively/">书接上回</a>。</p>
+<h2 id="深挖栈溢出异常"><a href="#深挖栈溢出异常" class="headerlink" title="深挖栈溢出异常"></a>深挖栈溢出异常</h2><h3 id="调用堆栈"><a href="#调用堆栈" class="headerlink" title="调用堆栈"></a>调用堆栈</h3><p>我们回到刚看到 <code>HardFault</code> 的时候，此时我们来观察调用堆栈：</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">HardFault_Handler@0x080009ec (/home/ferne/code/self-proj/Self-DIY-Kindle/Core/Src/stm32f4xx_it.c:95)</span><br><span class="line">&lt;signal handler called&gt;@0xfffffff1 (未知源:0)</span><br><span class="line">PendSV_Handler@0x0800774e (/home/ferne/code/self-proj/Self-DIY-Kindle/Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c:443)</span><br></pre></td></tr></table></figure></div>
+
+<p>得，一个 PendSV，一个 HardFault，还有个不知道什么情况的 signal handler 返回码，准备翻手册吧。<br>由于有 <a href="https://aliferne.github.io/2026/02/17/build-up-zig-dev-env-on-stm32g431/">搭建 Zig 开发环境那篇文章</a> 的经验，查手册还是非常轻车熟路的。</p>
+<p>在 Cortex-M4 内核中有一个特殊的寄存器叫 SCB，这个寄存器隶属于 NVIC 部分，由此可以推知它肯定和中断、异常有关，那么这个寄存器叫做系统控制块，这里面会存储一些和 CPU 信息，以及各种中断有关的信息，我们主要需要集中在 <code>SCB-&gt;HFSR</code>, <code>SCB-&gt;CFSR</code> 这两个寄存器，前者告诉我们 HardFault 相关的信息，后者则告诉我们 MemManageFault, BusFault 等的配置信息，如果需要深度调试 HardFault, 则看 SCB 的这几个寄存器几乎是必不可少的环节。</p>
+<p>首先看 0xE000ED2C，先确认一下 HFSR 是个什么情况，看到值又是 0x40000000，依然非常熟悉的 FORCED 置位，说明真凶另有他人，接下来让我们看到 CFSR(0xE000ED28)，<br>发现值为 0x0100 0000，查阅内核手册即可得知对应 Bit 24 被置位（即 UNALIGNED 标志位），这说明以未对齐的方式访问了内存。</p>
+<p>最后是 signal handler 返回的是 0xFFFFFFF1 （顺带说一句，正常情况下应当为 0xFFFFFFFD, 在你完整看完了理论部分自然就会知道为什么，这里由于不是很重要，就不讲了），对应 <code>EXC_RETURN</code> 的值为这个，我们会在<a href="#exc_return">附录</a>讲解 <code>EXC_RETURN</code>，把之前搭建 Zig 环境的坑填上。</p>
+<p>由于理论部分过长，我将其放在 debug 主线之外，作为<a href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86">补充资料</a></p>
+<p>那么调用堆栈里面有 <code>PendSV_Handler</code>，我们自然而然需要研究一下这个函数:</p>
+<h3 id="FreeRTOS-内的-PendSV-实现"><a href="#FreeRTOS-内的-PendSV-实现" class="headerlink" title="FreeRTOS 内的 PendSV 实现"></a>FreeRTOS 内的 PendSV 实现</h3><p>首先先给不知道 PendSV 是什么的读者做个基本介绍（详细讲解请参考<a href="#%E4%BB%80%E4%B9%88%E6%98%AF-pendsv">附录</a>），这个异常是 Cortex-M4 为了支持 OS 的上下文切换而特地造出来的一个异常（另一个有些相似的是 SVC 异常，这里不介绍）。</p>
+<p>由于发生中断时不宜进行上下文切换（否则中断不能得到及时响应），因此 Cortex-M4 内核让 PendSV 负责了上下文切换的任务，我们在实际使用时将其优先级调到最低，就可以保证先响应中断，再进行上下文切换。</p>
+<p>让我们定位到 port.c 的这个函数：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">xPortPendSVHandler</span><span class="params">( <span class="type">void</span> )</span></span><br></pre></td></tr></table></figure></div>
+
+<p>其中：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">xPortPendSVHandler</span><span class="params">( <span class="type">void</span> )</span> __<span class="title function_">attribute__</span> <span class="params">(( naked ))</span>;</span><br></pre></td></tr></table></figure></div>
+
+<p>需要注意，宏定义里面加入了 <code>__attribute__((naked))</code>， 这说明该函数是裸函数(即告诉编译器自己手动管理堆栈，不要替自己优化)，只能内联汇编。</p>
+<p>由于 FreeRTOS 这部分的实现还涉及到一些不相关的内容（比如 <code>isb</code>, <code>dsb</code>），这些感兴趣的自行查阅，我们只抽出最重要的部分，此外让我们假设我们不使用 FPU （<del>从而又能少讲几条指令，好耶！</del>）</p>
+<p>让我们来详细讲解一下 FreeRTOS 的 PendSV_Handler 都做了什么</p>
+<h4 id="保存任务-A-的上下文（压栈）"><a href="#保存任务-A-的上下文（压栈）" class="headerlink" title="保存任务 A 的上下文（压栈）"></a>保存任务 A 的上下文（压栈）</h4><p>下面这部分代码就是保存任务 A 上下文的代码：</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">/* mrs 表示将栈指针地址读到寄存器 */</span><br><span class="line">mrs r0, psp</span><br><span class="line"></span><br><span class="line">/* ldr: load register, 即加载数据到寄存器 */</span><br><span class="line">ldr r3, pxCurrentTCBConst</span><br><span class="line">/* 比如这一句就等价于 r2 = r3[0] */</span><br><span class="line">ldr r2, [r3]</span><br><span class="line"></span><br><span class="line">/* </span><br><span class="line"> * stmdb: 存储多个寄存器的值到内存中, 与 ldmia 配对</span><br><span class="line"> * 如果说 stmdb 是 push 的话，那么 ldmia 就是 pop</span><br><span class="line"> * 所以下面这一句是把 r4~r11, r14 的值写到 r0 对应的内存中</span><br><span class="line"> *</span><br><span class="line"> * 这一句是 AAPCS 规范的要求，可以查看附录</span><br><span class="line"> * 或者你只需要记住 AAPCS 规范就是函数调用的时候，</span><br><span class="line"> * 要先行把这么几个寄存器存到栈中</span><br><span class="line"> */</span><br><span class="line">stmdb r0!, &#123;r4-r11, r14&#125;</span><br><span class="line">/* str: store register, 即将寄存器的值存入内存 */</span><br><span class="line">str r0, [r2]</span><br></pre></td></tr></table></figure></div>
+
+<p>第一条指令将 psp 的值读取到 r0 中，而第二句和 <code>pxCurrentTCB</code> 这个变量有关(见 tasks.c 文件)：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*lint -save -e956 A manual analysis and inspection has been used to determine</span></span><br><span class="line"><span class="comment">which static variables must be declared volatile. */</span></span><br><span class="line">PRIVILEGED_DATA TCB_t * <span class="keyword">volatile</span> pxCurrentTCB = <span class="literal">NULL</span>;</span><br></pre></td></tr></table></figure></div>
+
+<p>第二句实际上表示将 <code>pxCurrentTCB</code> 赋值给 r3，而因为这个变量是个指针，因此就需要解引用，而这就是第三句干的事情了，此外十分注意， <code>ldr r2, [r3]</code> 实际上表示的是拿出 r3 寄存器对应内存中的第一个值，并赋值给 r2，那么第一个值是什么呢，让我们来看：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Task control block.  A task control block (TCB) is allocated for each task,</span></span><br><span class="line"><span class="comment"> * and stores task state information, including a pointer to the task&#x27;s context</span></span><br><span class="line"><span class="comment"> * (the task&#x27;s run time environment, including register values)</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">tskTaskControlBlock</span> 			/* <span class="title">The</span> <span class="title">old</span> <span class="title">naming</span> <span class="title">convention</span> <span class="title">is</span> <span class="title">used</span> <span class="title">to</span> <span class="title">prevent</span> <span class="title">breaking</span> <span class="title">kernel</span> <span class="title">aware</span> <span class="title">debuggers</span>. */</span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="keyword">volatile</span> StackType_t	*pxTopOfStack;	<span class="comment">/*&lt; Points to the location of the last item placed on the tasks stack.  THIS MUST BE THE FIRST MEMBER OF THE TCB STRUCT. */</span></span><br><span class="line">	<span class="comment">/* ...... */</span></span><br><span class="line">&#125; tskTCB;</span><br></pre></td></tr></table></figure></div>
+
+<p>现在知道为什么任务控制块 TCB 还要特地声明必须要把 <code>pxTopOfStack</code> 放在结构体的第一个变量了吧？</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">volatile</span> StackType_t	*pxTopOfStack;	<span class="comment">/*&lt; Points to the location of the last item placed on the tasks stack.  THIS MUST BE THE FIRST MEMBER OF THE TCB STRUCT. */</span></span><br></pre></td></tr></table></figure></div>
+
+<p>本质上来说其实就是因为这两句以及其他类似的操作。</p>
+<p>然后 <code>stmdb r0!, {r4-r11, r14}</code>, <code>str r0, [r2]</code> 就没什么好说的了，前一句就是把相关的寄存器存到任务 A 的堆栈去，第二句就是把新的栈指针存回去。</p>
+<h4 id="切换任务上下文"><a href="#切换任务上下文" class="headerlink" title="切换任务上下文"></a>切换任务上下文</h4><p>下面这一段是切换任务上下文的代码：</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">stmdb sp!, &#123;r0, r3&#125;</span><br><span class="line">/* ... */</span><br><span class="line">bl vTaskSwitchContext</span><br><span class="line">/* ... */</span><br><span class="line">ldmia sp!, &#123;r0, r3&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>这一段实际上就是一个完整的汇编代码调用函数的标准流程: prologue(压栈，设值) &#x3D;&gt; body(调用) &#x3D;&gt; epilogue(出栈，复原)</p>
+<p>因此我们只看 <code>bl vTaskSwitchContext</code>，这个函数位于 tasks.c</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">vTaskSwitchContext</span><span class="params">( <span class="type">void</span> )</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/* ... */</span></span><br><span class="line">    <span class="comment">/* 如果你配置了我上篇文章说的宏的话，这里就会正常调用 */</span></span><br><span class="line">		taskCHECK_FOR_STACK_OVERFLOW();</span><br><span class="line">		<span class="comment">/* ... */</span></span><br><span class="line">		</span><br><span class="line">		<span class="comment">/* Select a new task to run using either the generic C or port</span></span><br><span class="line"><span class="comment">		optimised asm code. */</span></span><br><span class="line">		taskSELECT_HIGHEST_PRIORITY_TASK(); <span class="comment">/*lint !e9079 void * is used as this macro is used with timers and co-routines too.  Alignment is known to be fine as the type of the pointer stored and retrieved is the same. */</span></span><br><span class="line">		<span class="comment">/* ... */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>我们只需要看 <code>taskSELECT_HIGHEST_PRIORITY_TASK()</code>，这个宏函数的实现，其中一句是：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">listGET_OWNER_OF_NEXT_ENTRY( pxCurrentTCB, &amp;( pxReadyTasksLists[ uxTopPriority ] ) );		\</span><br></pre></td></tr></table></figure></div>
+
+<p>对应：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> listGET_OWNER_OF_NEXT_ENTRY( pxTCB, pxList )										\</span></span><br><span class="line"><span class="meta">&#123;																							\</span></span><br><span class="line"><span class="meta">List_t * const pxConstList = ( pxList );													\</span></span><br><span class="line"><span class="meta">	<span class="comment">/* Increment the index to the next item and return the item, ensuring */</span>				\</span></span><br><span class="line"><span class="meta">	<span class="comment">/* we don&#x27;t return the marker used at the end of the list.  */</span>							\</span></span><br><span class="line"><span class="meta">	( pxConstList )-&gt;pxIndex = ( pxConstList )-&gt;pxIndex-&gt;pxNext;							\</span></span><br><span class="line"><span class="meta">	<span class="keyword">if</span>( ( void * ) ( pxConstList )-&gt;pxIndex == ( void * ) &amp;( ( pxConstList )-&gt;xListEnd ) )	\</span></span><br><span class="line"><span class="meta">	&#123;																						\</span></span><br><span class="line"><span class="meta">		( pxConstList )-&gt;pxIndex = ( pxConstList )-&gt;pxIndex-&gt;pxNext;						\</span></span><br><span class="line"><span class="meta">	&#125;																						\</span></span><br><span class="line"><span class="meta">	( pxTCB ) = ( pxConstList )-&gt;pxIndex-&gt;pvOwner;											\</span></span><br><span class="line"><span class="meta">&#125;</span></span><br></pre></td></tr></table></figure></div>
+
+<p>因此 <code>pxCurrentTCB</code> 会通过 <code>vTaskSwitchContext</code> 自动更新，回到 PendSV 之后，这里就是一个等待执行的任务了。</p>
+<h4 id="找到任务-B-的栈"><a href="#找到任务-B-的栈" class="headerlink" title="找到任务 B 的栈"></a>找到任务 B 的栈</h4><p>下面这一段负责找到任务 B 的栈</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ldr r1, [r3]</span><br><span class="line">ldr r0, [r1]</span><br></pre></td></tr></table></figure></div>
+
+<p>没什么好说的，记住 <code>r3 = pxCurrentTCB</code> 即可，所以 r0 是任务 B 的栈顶指针。</p>
+<h4 id="加载任务-B-的上下文（出栈）"><a href="#加载任务-B-的上下文（出栈）" class="headerlink" title="加载任务 B 的上下文（出栈）"></a>加载任务 B 的上下文（出栈）</h4><p>这个相对简单些：</p>
+<p><code>ldmia sp!, {r4-r11, r14}</code></p>
+<p>本质上来说就是</p>
+<p><code>pop {r4-r11, r14}</code></p>
+<p>然后再设置一下 <code>psp</code> 为任务 B 的栈指针(<code>msr psp, r0</code>)，执行 <code>bx r14</code> 以从异常中返回，并把控制权交还给任务 B 即可。</p>
+<h2 id="本次-HardFault-的因果链"><a href="#本次-HardFault-的因果链" class="headerlink" title="本次 HardFault 的因果链"></a>本次 HardFault 的因果链</h2><p>有了这些前置的知识，我们可以来 debug 了。</p>
+<p>由于之前提到的错误是 UNALIGNED, 所以我们只要锚定与内存访问有关的函数和指令即可</p>
+<p>由于我们已经有了调用堆栈，所以我们可以知道栈溢出错误是在切换上下文的时候产生的，那么自然就是找 PendSV 处理函数的问题，由于我在调试的时候已经定位到是 <code>ldmia r0!, {r4-r11, r14}</code> 的问题了，那么就让我们打断点到改变了 r0 寄存器值的指令吧！</p>
+<p>因此断点设置在 <code>ldr r0, [r1]</code>，这一步意味着从 <code>pxCurrentTCB</code> 中拿到 <code>pxTopOfStack</code> 的值。</p>
+<p>注意观察左侧 Register 栏的 r0 和 r1：</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/images/freertos-stackovf/%E8%B0%83%E8%AF%95%E8%BF%87%E7%A8%8BStep1.png"
+                      alt="Step1"
+                ></p>
+<p>目前是很正常的。</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/images/freertos-stackovf/%E8%B0%83%E8%AF%95%E8%BF%87%E7%A8%8BStep2.png"
+                      alt="Step2"
+                ></p>
+<p>但是到了这里：</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/images/freertos-stackovf/%E8%B0%83%E8%AF%95%E8%BF%87%E7%A8%8BStep3.png"
+                      alt="Step3"
+                ></p>
+<p>看, r3 是正常的，但是 r2 和 r1 变成了 0x1fff, 这说明在程序运行过程中，有指令将 <code>pxCurrentTCB</code> 对应的值修改为 0x1fff，进而导致 r0 从 r1 读出了垃圾值 0x3027b46，由于这个值不是 4 字节对齐的，最后使用 <code>ldmia</code> 对 UITask 的栈进行访问的时候就理所当然地炸掉了。</p>
+<p>那么假如说，我们想找到是谁修改的呢？也很简单，借助 GDB 即可，为了确认是谁修改了这玩意对应的值，我们需要先找到它在内存中对应的地址，那么：</p>
+<div class="code-container" data-rel="Shell"><figure class="iseeu highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) p &amp;pxCurrentTCB</span><br><span class="line"><span class="meta prompt_">$</span><span class="language-bash">1 = (TCB_t * volatile *) 0x20004630 &lt;pxCurrentTCB&gt;</span></span><br></pre></td></tr></table></figure></div>
+
+<p>然后我们将断点打在 <code>StartUITask</code> 的 <code>os_delay_ms(500)</code>，等运行到那里之后，再输入：</p>
+<div class="code-container" data-rel="Shell"><figure class="iseeu highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">这一句表示当 *pxCurrentTCB == 0x1fff 时，暂停运行代码</span></span><br><span class="line">(gdb) watch *(uint32_t *)0x20004630 if *(uint32_t *)0x20004630 == 0x1fff</span><br><span class="line">Hardware watchpoint 1: *(uint32_t *)0x20004630</span><br></pre></td></tr></table></figure></div>
+
+<p>然后继续运行，接下来我们可以看到：</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/images/freertos-stackovf/%E6%98%AF%E8%B0%81%E4%BF%AE%E6%94%B9%E4%BA%86pxCurrentTCB%E5%AF%B9%E5%BA%94%E7%9A%84%E5%80%BC.png"
+                      alt="是谁修改了pxCurrentTCB对应的值"
+                ></p>
+<p>注意我这里为什么标了 r2, 是因为一开始保存任务 A 的上下文的时候有一句 <code>ldr r2, [r3]</code>，说明 r2 实际上就是 <code>*pxCurrentTCB</code>，所以很明显值是在 <code>bl vTaskSwitchContext</code> 中被修改的， GDB 执行完这一句之后发现值被修改，于是停了下来，正好落在把 r0 清零的汇编上。</p>
+<p>或者更具体些（复现方法是在 <code>bl vTaskSwitchContext</code> 中打断点，运行到之前的 <code>os_delay_ms(500)</code> 之后，第一次 <code>bl</code> 是正常的，我们继续运行，第二次 <code>bl</code> 就需要进去这个函数里面看是哪里被修改了）：</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/../images/%E8%B0%83%E8%AF%95%E8%BF%87%E7%A8%8B-%E6%89%BE%E5%87%BA%E5%93%AA%E4%B8%80%E5%8F%A5%E4%BF%AE%E6%94%B9%E4%BA%86pxCurrentTCB%E5%AF%B9%E5%BA%94%E7%9A%84%E5%80%BC.png"
+                      alt="调试过程-找出哪一句修改了pxCurrentTCB对应的值"
+                ></p>
+<p>这三句是“帮凶”：</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/* 将原本 r3[4] 的值重新给 r3 */</span><br><span class="line">ldr r3, [r3, #4]</span><br><span class="line">/* 将 r3[12] 的值（被篡改成 0x1fff）取出并放到 r2 */</span><br><span class="line">ldr r2, [r3, #12]</span><br><span class="line">/* 将 pxCurrentTCB 存到 r3 */</span><br><span class="line">ldr r3, [pc, #28]</span><br><span class="line">/* 将当前 r2 的值更新到 r3[0] (pxTopOfStack) */</span><br><span class="line">str r2, [r3, #0]</span><br></pre></td></tr></table></figure></div>
+
+<p>执行完这三句之后我们可以看到确实是被修改了的：</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/../images/%E8%B0%83%E8%AF%95%E8%BF%87%E7%A8%8B-GDB%E9%AA%8C%E8%AF%81pxCurrentTCB%E5%80%BC%E6%98%AF%E5%90%A6%E8%A2%AB%E4%BF%AE%E6%94%B9.png"
+                      alt="调试过程-GDB验证pxCurrentTCB值是否被修改"
+                ></p>
+<p>进而导致下面的 <code>ldmia</code> 因为垃圾值内存没对齐而炸掉。</p>
+<p>然后我们再来找一下真凶，由于值在 <code>r3[12]</code>， 而 r3 此时为 <code>0x200014cc</code>（执行 <code>ldr r3, [r3, #4]</code> 那一句时），于是我们重新开始调试，并在 GDB 中输入：</p>
+<div class="code-container" data-rel="Shell"><figure class="iseeu highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) watch *(uint32_t *)(0x200014cc+0x0c) if *(uint32_t *)(0x200014cc+0x0c) == 0x1fff</span><br></pre></td></tr></table></figure></div>
+
+<p>然后你会发现 LVGL 库里的这一句被反复暂停：</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/images/freertos-stackovf/%E6%98%AF%E8%B0%81%E6%94%B9%E5%8F%98%E4%BA%86pxCurrentTCB%E5%AF%B9%E5%BA%94%E7%9A%84%E5%80%BC.png"
+                      alt="是谁改变了pxCurrentTCB对应的值"
+                ></p>
+<p>接下来执行 <code>os_delay_ms(500)</code>，然后两次 <code>bl vTaskSwitchContext</code> 之后“帮凶”成功把“鬼子领进村了”。</p>
+<p>（第一次 <code>bl vTaskSwitchContext</code> 并进去之后，看上面提到的四句，r3 的值为 0x20000d94, 而第二次 <code>bl</code> 则为 0x200014cc）。</p>
+<p>我们再来看一开始写的 Hook 函数，现在我们做如下修改：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;FreeRTOS.h&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;task.h&quot;</span></span></span><br><span class="line"><span class="comment">/* 临时暴露 TCB 结构体定义以访问栈指针 */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">tskTaskControlBlock</span> &#123;</span></span><br><span class="line">    <span class="keyword">volatile</span> StackType_t *pxTopOfStack;</span><br><span class="line">    ListItem_t xStateListItem;</span><br><span class="line">    ListItem_t xEventListItem;</span><br><span class="line">    UBaseType_t uxPriority;</span><br><span class="line">    StackType_t *pxStack;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">vApplicationStackOverflowHook</span><span class="params">(TaskHandle_t xTask,</span></span><br><span class="line"><span class="params">                                   <span class="type">char</span> *pcTaskName)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int32_t</span> stack_usage =</span><br><span class="line">        (<span class="type">uint32_t</span>)xTask-&gt;pxTopOfStack - (<span class="type">uint32_t</span>)xTask-&gt;pxStack;</span><br><span class="line">    <span class="type">int32_t</span> diff = stack_usage - <span class="number">512</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Stack overflow in task %s\r\n&quot;</span></span><br><span class="line">           <span class="string">&quot;=&gt; [pxTopOfStack: %p]\r\n&quot;</span></span><br><span class="line">           <span class="string">&quot;=&gt; [pxStack: %p]\r\n&quot;</span></span><br><span class="line">           <span class="string">&quot;=&gt; [pxTopOfStack - pxStack: %d,\tdiff: %d\tlt: %s]\r\n&quot;</span></span><br><span class="line">           <span class="string">&quot;=======================\r\n&quot;</span>,</span><br><span class="line">           pcTaskName, xTask-&gt;pxTopOfStack, xTask-&gt;pxStack,</span><br><span class="line">           stack_usage, diff,</span><br><span class="line">           diff &gt; <span class="number">0</span> ? <span class="string">&quot;TRUE&quot;</span> : <span class="string">&quot;FALSE&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">strcmp</span>(pcTaskName, <span class="string">&quot;UITask&quot;</span>) == <span class="number">0</span>) &#123;</span><br><span class="line">        gpio_write(&amp;usr_led, GPIO_Level_High);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div>
+
+<p>并且此时让我们将 <code>configCHECK_FOR_STACK_OVERFLOW</code> 改成 2,以获得更高的测量精度：</p>
+<div class="code-container" data-rel="C"><figure class="iseeu highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">if</span>( ( configCHECK_FOR_STACK_OVERFLOW &gt; 1 ) &amp;&amp; ( portSTACK_GROWTH &lt; 0 ) )</span></span><br><span class="line"></span><br><span class="line">	<span class="meta">#<span class="keyword">define</span> taskCHECK_FOR_STACK_OVERFLOW()																\</span></span><br><span class="line"><span class="meta">	&#123;																									\</span></span><br><span class="line"><span class="meta">		const uint32_t * const pulStack = ( uint32_t * ) pxCurrentTCB-&gt;pxStack;							\</span></span><br><span class="line"><span class="meta">		const uint32_t ulCheckValue = ( uint32_t ) 0xa5a5a5a5;											\</span></span><br><span class="line"><span class="meta">																										\</span></span><br><span class="line"><span class="meta">		<span class="keyword">if</span>( ( pulStack[ 0 ] != ulCheckValue ) ||												\</span></span><br><span class="line"><span class="meta">			( pulStack[ 1 ] != ulCheckValue ) ||												\</span></span><br><span class="line"><span class="meta">			( pulStack[ 2 ] != ulCheckValue ) ||												\</span></span><br><span class="line"><span class="meta">			( pulStack[ 3 ] != ulCheckValue ) )												\</span></span><br><span class="line"><span class="meta">		&#123;																								\</span></span><br><span class="line"><span class="meta">			vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, pxCurrentTCB-&gt;pcTaskName );	\</span></span><br><span class="line"><span class="meta">		&#125;																								\</span></span><br><span class="line"><span class="meta">	&#125;</span></span><br></pre></td></tr></table></figure></div>
+
+<p>上面这段代码就表示是使用一段固定值填充栈的起始地址（详情请查阅 <code>prvInitialiseNewTask</code> 函数的宏 <code>tskSET_NEW_STACKS_TO_KNOWN_VALUE</code>），然后每次切换任务（<code>vTaskSwitchContext</code>）时，检查这些值和原本的已知值相符，如不相符，则说明发生了栈溢出。</p>
+<p>打印信息例子如下：</p>
+<div class="code-container" data-rel="Plaintext"><figure class="iseeu highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Stack overflow in task UITask</span><br><span class="line">=&gt; [pxTopOfStack: 0x200018dc]</span><br><span class="line">=&gt; [pxStack: 0x20001528]</span><br><span class="line">=&gt; [pxTopOfStack - pxStack: 948,        diff: 436       lt: TRUE]</span><br><span class="line">=======================</span><br><span class="line">Stack overflow in task UITask</span><br><span class="line">=&gt; [pxTopOfStack: 0x20001a54]</span><br><span class="line">=&gt; [pxStack: 0x20001528]</span><br><span class="line">=&gt; [pxTopOfStack - pxStack: 1324,       diff: 812       lt: TRUE]</span><br><span class="line">=======================</span><br></pre></td></tr></table></figure></div>
+
+<p>其中 <code>pxStack</code> 表示栈起始地址， <code>pxTopOfStack</code> 表示栈最后一个元素所在地址，lt 表示实际栈空间大小是否超出我们预设的 512 Words</p>
+<p>我们来统计一下栈溢出并且栈指针完全越界的次数，我总共测试了三次：</p>
+<div class="code-container" data-rel="Bash"><figure class="iseeu highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; <span class="built_in">cat</span> StackOvf.txt | grep <span class="string">&quot;TRUE&quot;</span> | <span class="built_in">wc</span> -l</span><br><span class="line">590</span><br><span class="line">&gt; <span class="built_in">cat</span> StackOvf.txt | grep <span class="string">&quot;FALSE&quot;</span> | <span class="built_in">wc</span> -l</span><br><span class="line">64</span><br></pre></td></tr></table></figure></div>
+
+<p>所以被覆写的概率是非常非常大的，因此到这里基本就可以推断是栈溢出 &#x3D;&gt; pxCurrentTCB-&gt;pxTopOfStack 被覆写 &#x3D;&gt; PendSV 切换任务时读取了非法的栈指针，并尝试通过 <code>ldmia</code> 加载相关寄存器的值 &#x3D;&gt; 触发内存未对齐访问 &#x3D;&gt; 导致 UsageFault &#x3D;&gt; 重定向为 HardFault.</p>
+<p>最后再说一句无关紧要的，只要在初始化时加入 <code>SCB-&gt;SHCSR |= (1 &lt;&lt; 18U);</code>，就会变成触发 UsageFault 了，不过我不是很理解为什么这些异常居然默认不打开，而是重定向到 HardFault，我想这可能得问 Cortex 内核的设计人员了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这次其实确确实实暴露了我对 FreeRTOS 了解不深的严重问题，也正好和我的初心相符了，算是一种求锤得锤吧（笑）。<strong>如果遇到了什么玄学问题，首先看下堆栈啥的正不正常，这也许是各种 RTOS 在调试时先要确认的一步吧</strong>！此外还因为这个 BUG 而被迫看了 FreeRTOS 的代码，说实话写得还真的非常漂亮，仿佛在欣赏一件艺术品，已严肃偷师（笑）。</p>
+<h2 id="理论知识"><a href="#理论知识" class="headerlink" title="理论知识"></a>理论知识</h2><h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>在本附录中我们将会讲解 Cortex-M4 的内核设计和错误机制处理，这有助于你理解第二篇文章的大部分内容。</p>
+<p>以下内容均选自《Arm Cortex-M3 与 Cortex-M4 权威指南》，下称《权威指南》，需要注意的是部分整合了个人的理解，因此下面的内容只能当作二道贩子兜售的二手知识，想要有更详细的理解，还是需要看原著，并且自己亲手调一遍 HardFault，这些知识才会是你的。</p>
+<h3 id="编程模型"><a href="#编程模型" class="headerlink" title="编程模型"></a>编程模型</h3><p>M4 内核的编程模型是 “二二二” 模型：</p>
+<ul>
+<li>两种操作状态：调试状态；Thumb 状态</li>
+<li>两种模式：处理模式(Handler)；线程模式(Thread)</li>
+<li>两种权限：特权级；非特权级（下称用户级）</li>
+</ul>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/images/freertos-stackovf/%E6%93%8D%E4%BD%9C%E7%8A%B6%E6%80%81%E5%92%8C%E6%A8%A1%E5%BC%8F.png"
+                      alt="操作状态和模式"
+                ></p>
+<p>这篇文章中我们重点关注模式和权限：</p>
+<p>线程模式是处理器正常执行代码时对应的模式，而处理模式是处理器进入异常&#x2F;中断时的处理模式；处理器一般默认在特权级状态运行，但是当有 RTOS 时，执行任务则一般以用户级模式运行程序。</p>
+<p>软件可以把自身从特权级切换到用户级，但是要想切回来就必须借助异常机制。</p>
+<p>通过区分特权级和用户级，我们实际上可以实现对一些关键资源的保护，以及提供一个基本的安全模型。</p>
+<h3 id="栈设计与影子栈"><a href="#栈设计与影子栈" class="headerlink" title="栈设计与影子栈"></a>栈设计与影子栈</h3><p>我们都知道，程序运行时需要使用栈存储局部变量，由此就需要用到栈指针，一般来说一个栈指针就已经足够了，但是 Cortex-M3&#x2F;4 内核为了方便嵌入式 OS，特地设置了两套栈指针：</p>
+<ul>
+<li>主栈指针 MSP</li>
+<li>进程栈指针 PSP</li>
+</ul>
+<p>之所以叫影子栈，我想是因为对于一般程序来说，在同一时刻不能同时见到两个栈指针，从而也就实现了一个栈为另一个栈的“影子”，看不见也摸不着（《权威指南》并没有说为什么叫影子栈，但提到了同一时刻无法同时看到两个栈）。</p>
+<p>在不使用 RTOS 的情况下，程序只需要主栈指针即可，但是在使用 RTOS 的情况下，则需要进程栈指针，分开设置两套栈指针的目的，实际上是为了安全和高效：</p>
+<ul>
+<li>在有 RTOS 时，内核使用主栈，而任务使用进程栈，这样在某个任务的任务栈溢出之后，内核和其他任务的栈不会受到影响（栈空间的分配不是连续的，因此不太可能覆写其他栈）。</li>
+<li>每个任务只需要满足自身栈的最大需求和从上下文切换中保存的上一级栈的栈帧，以及一些特定的条件即可，不需要考虑 ISR 和嵌套中断的栈，这就使得静态分配栈空间成为可能。</li>
+<li>OS 还能借助存储器保护单元（MPU）还能访问某个栈区的任务，同时在它有栈溢出风险时，MPU 可以触发 <code>MemManageFault</code> 并避免栈空间以外的存储区域被覆盖。</li>
+</ul>
+<h3 id="异常处理机制"><a href="#异常处理机制" class="headerlink" title="异常处理机制"></a>异常处理机制</h3><h4 id="什么是异常"><a href="#什么是异常" class="headerlink" title="什么是异常"></a>什么是异常</h4><p>《权威指南》中对于异常的定义为：改变程序流的事件。当异常发生时，处理器会暂停当前任务，并转而去执行一段被称为异常处理的程序，在执行完毕之后回到之前的任务。</p>
+<p>其实从上面的叙述中，你已经可以把异常和中断画个约等号了（中断实际上就是异常的一种），我们在初学中断的时候也是这么一个定义方法，不过这段程序被称为中断服务程序(ISR).</p>
+<p>然而，我们常见<del>且可恨</del>的 <code>HardFault</code> 实际上不是中断，而是系统异常（《权威指南》 Chapter 4.5.1, P74）。而对应的 <code>Handler</code> 里面的程序是异常处理程序，而非 ISR。</p>
+<p>对于 Cortex-M3&#x2F;4 内核来说，有几个异常为错误处理异常，处理器检测到错误时则会触发这些异常，比如 <code>HardFault</code>, <code>UsageFault</code>, <code>MemManageFault</code>, <code>BusFault</code>，然而我们总是见到 <code>HardFault</code> 的死循环，而不是其他的，这是为什么呢？实际上内核的缺省行为是只使能了 <code>HardFault</code>，从而其他所有的错误处理异常都会被重定向到 <code>HardFault</code> 中，而在内核中 <code>HardFault</code> 有一块专门的寄存器 <code>SCB-&gt;HFSR</code>，这个寄存器的第 31 位 (<code>FORCED</code>) 会告诉你 <code>HardFault</code> 是不是由其他错误重定向而来。基本上 75% 以上的情况，我们都能认为 <code>HardFault</code> 是被重定向而来的(其自身发生的概率仅为 25%，如果只算理论值的话)。</p>
+<h3 id="异常全流程"><a href="#异常全流程" class="headerlink" title="异常全流程"></a>异常全流程</h3><p>异常全流程按照时间线可以分为：接受异常请求，异常进入，异常处理和异常返回。</p>
+<p>我们不会讲得特别详细，我只需要保证你有个基本概念就行，详细的请看《权威指南》。</p>
+<p>我们在学怎么给单片机开中断的时候都学到过，要使能并开启中断，对于异常来说也是同理的，首先是异常请求，要触发内核的异常事件，你得保证异常被使能了，没被屏蔽且优先级高于当前执行的任务，此时内核才会去处理异常。而后就会进入异常，这里也和中断相似，首先我们要保存好当前任务的上下文（比如 PC 和一些寄存器），方便到时候处理完了回来还能找的到路，然后再从向量表中取出异常向量，准备去执行异常处理函数，并且更新和异常等相关的寄存器。完成了这些步骤之后就会正式开始处理异常，此时 MCU 会保证自己运行在特权模式，且使用 MSP 操作栈（这里我们不考虑异常嵌套）。最后到了异常返回时，MCU 会把一个叫做 <code>EXC_RETURN</code> (exception return) 的特殊值存进 LR 里面，当这个值被某个允许的异常返回指令写入 PC 时，就会触发异常返回流程。</p>
+<h3 id="EXC-RETURN"><a href="#EXC-RETURN" class="headerlink" title="EXC_RETURN"></a><code>EXC_RETURN</code></h3><p>然后我们来说道说道这个东西。</p>
+<p>它实际上就是一个普通地不能再普通的值了，只是说起到了一些对于当前处于什么运行状态的指示作用。<br>这个值在使用一些特定指令加载到程序计数器 PC 时，比如 BX, POP 或者 LDR&#x2F;LDM ，就会触发异常返回机制。</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/images/freertos-stackovf/EXC_RETURN.png"
+                      alt="EXC_RETURN"
+                ></p>
+<p>看到这张图，我想你应该会知道为什么我之前说正常情况下应该返回 <code>0xFFFFFFFD</code>，因为我没用 FPU, 且我在任务调度，所以下一刻应该换任务，这就要求必须切换到 PSP 和线程模式，所以对应就只能是这个值了。</p>
+<p>有了这些前置知识，我想你应该可以自己分析这张图：</p>
+<p><img  
+                     lazyload
+                     src="/images/loading.svg"
+                     data-src="/images/freertos-stackovf/%E5%BC%82%E5%B8%B8%E8%BF%94%E5%9B%9E%E5%85%A8%E6%B5%81%E7%A8%8B.png"
+                      alt="异常返回全流程"
+                ></p>
+<h3 id="什么是-OS，什么是-RTOS"><a href="#什么是-OS，什么是-RTOS" class="headerlink" title="什么是 OS，什么是 RTOS"></a>什么是 OS，什么是 RTOS</h3><p>这部分是我个人的拙见，如有错误还请多多海涵，不吝赐教。</p>
+<p>OS，按照教科书上的定义，指的是管理计算机硬件与软件资源的程序。打个比方，就好比你去餐厅吃饭，跟服务员点菜，服务员负责把订单交给厨师，此外服务员同时负责维持餐厅的秩序，这里服务员就承担着类似于 OS 的角色，服务员既要和厨师（底层硬件）交流，又要负责安排客人入座，维持现场秩序（管理各种资源）。</p>
+<p>而 RTOS 则相对而言更加简化一些，它依然需要管理各种资源，也依然需要和底层硬件沟通，但是 RTOS 则更加侧重于 RT (Real-Time)，就好比一个火爆的大餐厅，服务员不一定顾得上你，而一个苍蝇馆子，服务员则更能快速给你上菜。</p>
+<p>广义上来说，一个 OS 可以分为三个组成部分：内核、 Shell，和一些杂七杂八的软件。但对于一个 OS 来说，<strong>最核心的概念实际上是内核</strong>，也就是<strong>负责线程&#x2F;进程&#x2F;任务管理、内存管理、驱动管理等的程序</strong>。这也是为什么 Linux 有那么多发行版，但它们仍然是 Linux； 各种 RTOS 虽然复杂程度不一（FreeRTOS 只有非常轻量的内核，RTT 和 Zephyr 可以有宛如 Linux 般的 dts 等复杂驱动适配），但它们都提供了任务创建、调度、信号量、各种锁，因为 OS 的核心与灵魂就是内核，而 RTOS 则是任务调度.</p>
+<p>因此理解 RTOS 的内核在干些什么，就理解了 RTOS 在干什么。不过我们在这里不会讲调度算法，而是会更加侧重于 OS 的启动流程和上下文切换逻辑。我们将在下面介绍 Cortex-M 内核用于支持嵌入式 OS 的两个异常，并由此引出启动流程和上下文切换的逻辑。</p>
+<h3 id="什么是-PendSV"><a href="#什么是-PendSV" class="headerlink" title="什么是 PendSV"></a>什么是 PendSV</h3><p>PendSV 中文名为可挂起的系统调用，其挂起状态可以在更高优先级的异常处理内设置，并且还会在高优先级处理完之后才执行，也就是说，只要将这玩意的优先级设置为最低，就可以让 PendSV 在其他中断任务搞定之后再执行，由于此特性，该异常对于上下文切换十分有用，这也是嵌入式 OS 设计的关键所在。</p>
+<p>由于上下文切换属于任务调度，而任务调度属于 OS 内核，那么就得说下内核是个什么情况。</p>
+<p>OS 内核的执行可由下面条件触发：</p>
+<ul>
+<li>应用任务中 SVC 指令的执行（当应用在等一批数据或因为一些情况被耽搁，可以调用系统服务以向内核申请切换任务）</li>
+<li>周期性的 SysTick 异常</li>
+</ul>
+<p>一般来说， OS 会在 SysTick 触发时决定要换到什么任务去，但是如果此时发生了中断请求（IRQ），则 OS 不应当执行上下文切换，否则会导致 IRQ 处理延迟。</p>
+<p>那么可以设想一下如果没有 PendSV 会是个什么情况：</p>
+<p>没有 PendSV，那么就意味着发生 IRQ 时，你必须要优先处理 IRQ，且避免上下文切换，这看起来似乎很容易就解决了，然而当 IRQ 和 SysTick 发生频率相近呢？此时就会导致这两个中断“共振”——本来我在 SysTick 要换任务的，给你一搞结果啥都干不了。这会影响系统的性能。</p>
+<p>然而，有了 PendSV 之后，我大可以在 PendSV 里面去处理，如果发生了 IRQ，那就先处理 IRQ，处理到最后再执行 PendSV， 这就保证了上下文虽然可能比较晚切换，但是一定能切换。</p>
+<p>![PendSV-IRQ 上下文切换示例][PendSV-IRQ 上下文切换示例]</p>
+<p>由于 PendSV 负责切换上下文，那么就必然涉及到任务的上下文保存和上下文加载，也就是说，对于准备切换的任务 A， PendSV 需要将它的寄存器值保存下来，而对于即将运行的任务 B，PendSV 需要恢复它的寄存器值，保存什么，恢复什么，都遵循 AAPCS 规范。</p>
+<p>因此 PendSV 要做的事情简单点说就可以概括为四步：</p>
+<ol>
+<li>保存任务 A 的上下文（压栈）</li>
+<li>决定要切换成哪个任务（这里假定为任务 B）</li>
+<li>找到任务 B 的栈</li>
+<li>加载任务 B 的上下文（出栈）</li>
+</ol>
+<p>然后把主动权还给任务 B 即可 (<code>bx r14</code>)。</p>
+<p>![PendSV 上下文切换][PendSV 上下文切换]</p>
+<p><a href="#freertos-%E5%86%85%E7%9A%84-pendsv-%E5%AE%9E%E7%8E%B0">FreeRTOS 内的代码</a></p>
+<h3 id="AAPCS-规范"><a href="#AAPCS-规范" class="headerlink" title="AAPCS 规范"></a>AAPCS 规范</h3><p>AAPCS 规范，即 ARM 架构过程调用标准，它规定了编译器生成的汇编代码对 CPU 的操作约定（手写汇编最好也要遵守）。</p>
+<p>该标准允许 C 函数修改 R0～R3，R12，R14（LR） 以及 PSR，如果要修改 R4～R11，则应当将这些寄存器保存到栈中，并在函数结束前将其恢复。</p>
+<p>R0<del>R3, R12, LR, PSR 为“调用者保存寄存器”，若在函数调用后还需要使用这些寄存器的数值，就必须先行保存到内存中，而 R4</del>R11 为“被调用者保存寄存器”，被调用的子程序&#x2F;函数需要保证这些值在函数结束时不会发生变化，不过在执行时可以发生变化，只是要确保函数返回时要恢复为初始值。</p>
+<p>对于浮点单元也是类似的，这里不讲。</p>
+<p>一般来说函数调用将 R0～R3 作为输入参数，R0 用作返回结果，若返回值为 64 位则 R1 也作为返回结果。</p>
+<p>特别的，当处理异常时，返回地址（PC）的数值并不存在 LR, LR 存 <code>EXC_RETURN</code>，因此异常流程需要自行保存返回地址，也就是说此时异常处理需要保存八个寄存器（没有或者不启用 FPU 时），分别为 r4~r11, r14(lr)。</p>
+<hr>
+<p style="display:none">图片链接：</p>
+
+<p style="display:none">参考资料：</p>
+
+
+		</div>
+
+		
+		<div class="post-copyright-info w-full my-8 px-2 sm:px-6 md:px-8">
+			<div class="article-copyright-info-container">
+    <ul>
+        <li><strong>Título:</strong> FreeRTOS 的上下文切换与栈溢出 —— 从 PendSV 到 HardFault 的调试全流程</li>
+        <li><strong>Autor:</strong> Ferne</li>
+        <li><strong>Creado el
+                :</strong> 2026-06-24 17:42:34</li>
+        
+            <li>
+                <strong>Actualizado el
+                    :</strong> 2026-06-24 17:46:27
+            </li>
+        
+        <li>
+            <strong>Enlace:</strong> https://aliferne.github.io/2026/06/24/freertos-from-pendsv-to-hardfault/
+        </li>
+        <li>
+            <strong>
+                Licencia:
+            </strong>
+            
+
+            
+                Este trabajo está licenciado bajo <a class="license" target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0">CC BY-NC-SA 4.0</a>.
+            
+        </li>
+    </ul>
+</div>
+
+		</div>
+		
+
+		
+		<ul class="post-tags-box text-lg mt-1.5 flex-wrap justify-center flex md:hidden">
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/mcu/">#mcu</a>&nbsp;
+			</li>
+			
+			<li class="tag-item mx-0.5">
+				<a href="/tags/rtos/">#rtos</a>&nbsp;
+			</li>
+			
+		</ul>
+		
+
+		
+
+		
+		<div class="article-nav my-8 flex justify-between items-center px-2 sm:px-6 md:px-8">
+			
+			
+			<div class="article-next border-border-color shadow-redefine-flat shadow-shadow-color-2 rounded-medium px-4 py-2 hover:shadow-redefine-flat-hover hover:shadow-shadow-color-2">
+				<a class="next" rel="next" href="/2026/06/21/freertos-how-to-debug-stackovf-effectively/">
+					<span class="title flex justify-center items-center">
+						<span class="post-nav-title-item truncate max-w-48">如何在 FreeRTOS 中高效调试栈溢出错误</span>
+						<span class="post-nav-item">Publicaciones siguientes</span>
+					</span>
+					<span class="right arrow-icon flex justify-center items-center">
+						<i class="fa-solid fa-chevron-right"></i>
+					</span>
+				</a>
+			</div>
+			
+		</div>
+		
+
+
+		
+		<div class="comment-container px-2 sm:px-6 md:px-8 pb-8">
+			<div class="comments-container mt-10 w-full ">
+    <div id="comment-anchor" class="w-full h-2.5"></div>
+    <div class="comment-area-title w-full my-1.5 md:my-2.5 text-xl md:text-3xl font-bold">
+        Comentarios
+    </div>
+    
+
+        
+            
+    <div id="waline"></div>
+    <script type="module" data-swup-reload-script>
+      import { init } from '/js/libs/waline.mjs';
+
+      function loadWaline() {
+        init({
+          el: '#waline',
+          serverURL: 'https://example.example.com',
+          dark: 'body[class~="dark-mode"]',
+          reaction: false,
+          requiredMeta: ['nick', 'mail'],
+          emoji: [],
+                    lang: 'zh-CN',
+        });
+      }
+
+      if (typeof swup !== 'undefined') {
+        loadWaline();
+      } else {
+        window.addEventListener('DOMContentLoaded', loadWaline);
+      }
+    </script>
+
+
+
+        
+    
+</div>
+
+		</div>
+		
+	</div>
+
+	
+	<div class="toc-content-container">
+		<div class="post-toc-wrap">
+	<div class="post-toc">
+		<div class="toc-title">En esta página</div>
+		<div class="page-title">FreeRTOS 的上下文切换与栈溢出 —— 从 PendSV 到 HardFault 的调试全流程</div>
+		<ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B7%B1%E6%8C%96%E6%A0%88%E6%BA%A2%E5%87%BA%E5%BC%82%E5%B8%B8"><span class="nav-text">深挖栈溢出异常</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E7%94%A8%E5%A0%86%E6%A0%88"><span class="nav-text">调用堆栈</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FreeRTOS-%E5%86%85%E7%9A%84-PendSV-%E5%AE%9E%E7%8E%B0"><span class="nav-text">FreeRTOS 内的 PendSV 实现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E6%AC%A1-HardFault-%E7%9A%84%E5%9B%A0%E6%9E%9C%E9%93%BE"><span class="nav-text">本次 HardFault 的因果链</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86"><span class="nav-text">理论知识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B"><span class="nav-text">编程模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%88%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%BD%B1%E5%AD%90%E6%A0%88"><span class="nav-text">栈设计与影子栈</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E6%9C%BA%E5%88%B6"><span class="nav-text">异常处理机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%82%E5%B8%B8%E5%85%A8%E6%B5%81%E7%A8%8B"><span class="nav-text">异常全流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#EXC-RETURN"><span class="nav-text">EXC_RETURN</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-OS%EF%BC%8C%E4%BB%80%E4%B9%88%E6%98%AF-RTOS"><span class="nav-text">什么是 OS，什么是 RTOS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-PendSV"><span class="nav-text">什么是 PendSV</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AAPCS-%E8%A7%84%E8%8C%83"><span class="nav-text">AAPCS 规范</span></a></li></ol></li></ol>
+
+	</div>
+</div>
+	</div>
+	
+</div>
+			</div>
+
+			
+		</div>
+
+		<div class="main-content-footer">
+			<footer class="footer mt-5 py-5 h-auto text-base text-third-text-color relative border-t-2 border-t-border-color">
+    <div class="info-container py-3 text-center">
+        
+        <div class="text-center">
+            &copy;
+            
+              <span>2022</span>
+              -
+            
+            2026&nbsp;&nbsp;<i class="fa-solid fa-heart fa-beat" style="--fa-animation-duration: 0.5s; color: #f54545"></i>&nbsp;&nbsp;<a href="/">Ferne</a>
+            
+                
+                <p class="post-count space-x-0.5">
+                    <span>
+                        4 publicaciones en total
+                    </span>
+                    
+                </p>
+            
+        </div>
+        
+            <script data-swup-reload-script src="https://cn.vercount.one/js"></script>
+            <div class="relative text-center lg:absolute lg:right-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-right">
+                
+                    <span id="busuanzi_container_site_uv" class="lg:!block">
+                        <span class="text-sm">CONTADOR DE VISITANTES</span>
+                        <span id="busuanzi_value_site_uv"></span>
+                    </span>
+                
+                
+                    <span id="busuanzi_container_site_pv" class="lg:!block">
+                        <span class="text-sm">TOTAL DE VISITAS</span>
+                        <span id="busuanzi_value_site_pv"></span>
+                    </span>
+                
+            </div>
+        
+        <div class="relative text-center lg:absolute lg:left-[20px] lg:top-1/2 lg:-translate-y-1/2 lg:text-left">
+            <span class="lg:block text-sm">DESARROLLADO POR <?xml version="1.0" encoding="utf-8"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg class="relative top-[2px] inline-block align-baseline" version="1.1" id="圖層_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1rem" height="1rem" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve"><path fill="#0E83CD" d="M256.4,25.8l-200,115.5L56,371.5l199.6,114.7l200-115.5l0.4-230.2L256.4,25.8z M349,354.6l-18.4,10.7l-18.6-11V275H200v79.6l-18.4,10.7l-18.6-11v-197l18.5-10.6l18.5,10.8V237h112v-79.6l18.5-10.6l18.5,10.8V354.6z"/></svg><a target="_blank" class="text-base" href="https://hexo.io">Hexo</a></span>
+            <span class="text-sm lg:block">TEMA&nbsp;<a class="text-base" target="_blank" href="https://github.com/EvanNotFound/hexo-theme-redefine">Redefine v2.8.5</a></span>
+        </div>
+        
+        
+            <div>
+                Blog en línea por <span class="odometer" id="runtime_days" ></span> días <span class="odometer" id="runtime_hours"></span> horas <span class="odometer" id="runtime_minutes"></span> Min <span class="odometer" id="runtime_seconds"></span> Seg
+            </div>
+        
+        
+            <script data-swup-reload-script>
+                try {
+                    function odometer_init() {
+                    const elements = document.querySelectorAll('.odometer');
+                    elements.forEach(el => {
+                        new Odometer({
+                            el,
+                            format: '( ddd).dd',
+                            duration: 200
+                        });
+                    });
+                    }
+                    odometer_init();
+                } catch (error) {}
+            </script>
+        
+        
+        
+    </div>  
+</footer>
+		</div>
+	</div>
+
+	
+	<div class="post-tools">
+		<div class="post-tools-container">
+	<ul class="article-tools-list">
+		<!-- TOC aside toggle -->
+		
+		<li class="right-bottom-tools page-aside-toggle">
+			<i class="fa-regular fa-outdent"></i>
+		</li>
+		
+
+		<!-- go comment -->
+		
+		<li class="go-comment">
+			<i class="fa-regular fa-comments"></i>
+		</li>
+		
+	</ul>
+</div>
+	</div>
+	
+
+	<div class="right-side-tools-container">
+		<div class="side-tools-container">
+	<ul class="hidden-tools-list">
+		<li class="right-bottom-tools tool-font-adjust-plus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-plus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-font-adjust-minus flex justify-center items-center">
+			<i class="fa-regular fa-magnifying-glass-minus"></i>
+		</li>
+
+		<li class="right-bottom-tools tool-dark-light-toggle flex justify-center items-center">
+			<i class="fa-regular fa-moon"></i>
+		</li>
+
+		<!-- rss -->
+		
+
+		
+
+		<li class="right-bottom-tools tool-scroll-to-bottom flex justify-center items-center">
+			<i class="fa-regular fa-arrow-down"></i>
+		</li>
+	</ul>
+
+	<ul class="visible-tools-list">
+		<li class="right-bottom-tools toggle-tools-list flex justify-center items-center">
+			<i class="fa-regular fa-cog fa-spin"></i>
+		</li>
+		
+		<li class="right-bottom-tools tool-scroll-to-top flex justify-center items-center">
+			<i class="arrow-up fas fa-arrow-up"></i>
+			<span class="percent"></span>
+		</li>
+		
+		
+	</ul>
+</div>
+	</div>
+
+	<div class="image-viewer-container">
+	<img src="">
+</div>
+
+	
+
+</main>
+
+
+
+<script src="/js/build/libs/Swup.min.js"></script>
+
+<script src="/js/build/libs/SwupSlideTheme.min.js"></script>
+
+<script src="/js/build/libs/SwupScriptsPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupProgressPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupScrollPlugin.min.js"></script>
+
+<script src="/js/build/libs/SwupPreloadPlugin.min.js"></script>
+
+<script>
+    const swup = new Swup({
+        plugins: [
+            new SwupScriptsPlugin({
+                optin: true,
+            }),
+            new SwupProgressPlugin(),
+            new SwupScrollPlugin({
+                offset: 80,
+            }),
+            new SwupSlideTheme({
+                mainElement: ".main-content-body",
+            }),
+            new SwupPreloadPlugin(),
+        ],
+        containers: ["#swup"],
+    });
+</script>
+
+
+
+
+	
+<script src="/js/build/tools/imageViewer.js" type="module"></script>
+
+<script src="/js/build/utils.js" type="module"></script>
+
+<script src="/js/build/main.js" type="module"></script>
+
+<script src="/js/build/layouts/navbarShrink.js" type="module"></script>
+
+<script src="/js/build/tools/scrollTopBottom.js" type="module"></script>
+
+<script src="/js/build/tools/lightDarkSwitch.js" type="module"></script>
+
+<script src="/js/build/layouts/categoryList.js" type="module"></script>
+
+
+
+
+
+    
+<script src="/js/build/tools/codeBlock.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/layouts/lazyload.js" type="module"></script>
+
+
+
+
+    
+<script src="/js/build/tools/runtime.js"></script>
+
+    
+<script src="/js/build/libs/odometer.min.js"></script>
+
+    
+<link rel="stylesheet" href="/assets/odometer-theme-minimal.css">
+
+
+
+
+  
+<script src="/js/build/libs/Typed.min.js"></script>
+
+  
+<script src="/js/build/plugins/typed.js" type="module"></script>
+
+
+
+
+
+
+
+
+    
+<script src="/js/build/libs/anime.min.js"></script>
+
+
+
+
+
+    
+<script src="/js/build/tools/tocToggle.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/layouts/toc.js" type="module" data-swup-reload-script=""></script>
+
+<script src="/js/build/plugins/tabs.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+<script src="/js/build/libs/moment-with-locales.min.js" data-swup-reload-script=""></script>
+
+
+<script src="/js/build/layouts/essays.js" type="module" data-swup-reload-script=""></script>
+
+
+
+
+
+	
+</body>
+
+</html>
