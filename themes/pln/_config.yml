@@ -1,0 +1,40 @@
+# 左上角站点名称
+logo: Ferne
+
+# 右上角“链接”下拉菜单
+more:
+  GitHub: https://github.com/aliferne
+
+# 页脚右侧信息
+footer_info: © 2026 Ferne
+
+# 页脚右侧链接
+about:
+  title: GitHub
+  link: https://github.com/aliferne
+
+# 首页摘要截取字符数
+excerpt_num: 120
+
+# 文章页是否显示目录
+toc: true
+
+# 是否启用 MathJax（文章里有 LaTeX 公式时再打开）
+latex: false
+
+# 评论系统（Valine），默认关闭
+# 文档：https://valine.js.org
+valine:
+  enable: false
+  appId:
+  appKey:
+  guest_info: nick,mail,link
+  placeholder: 说点什么吧……
+  avatar: mm
+  pageSize: 10
+  verify: false
+  notify: false
+  lang: zh-cn
+
+# RSS 地址，例如 /atom.xml（安装 hexo-generator-feed 后再填写并取消注释）
+# rss: /atom.xml

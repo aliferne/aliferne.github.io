@@ -8,13 +8,8 @@ subtitle: '奔赴山海，保持热爱'
 description: 'Ferne 的编程小屋，不定期更新'
 keywords: blogs, github, ferne, aliferne
 author: Ferne
-language: zh_CN
+language: zh-CN
 timezone: 'Asia/Shanghai'
-
-avatar:
-  url: ./images/amiya-avator.jpg
-  rounded: false
-  rotated: false
 
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
@@ -101,10 +96,9 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: redefine
-# Then related from doc:
-# https://redefine-docs.ohevan.com/zh/docs/getting-started
-# I should make a new conf file: _config.redefine.yml
+theme: pln
+# 主题配置见 themes/pln/_config.yml
+# 主题仓库: https://github.com/gaoryrt/hexo-theme-pln
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
