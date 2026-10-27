@@ -172,12 +172,12 @@
 <p><img src="/images/freertos-stackovf/%E6%98%AF%E8%B0%81%E4%BF%AE%E6%94%B9%E4%BA%86pxCurrentTCB%E5%AF%B9%E5%BA%94%E7%9A%84%E5%80%BC.png" alt="是谁修改了pxCurrentTCB对应的值"></p>
 <p>注意我这里为什么标了 r2, 是因为一开始保存任务 A 的上下文的时候有一句 <code>ldr r2, [r3]</code>，说明 r2 实际上就是 <code>*pxCurrentTCB</code>，所以很明显值是在 <code>bl vTaskSwitchContext</code> 中被修改的， GDB 执行完这一句之后发现值被修改，于是停了下来，正好落在把 r0 清零的汇编上。</p>
 <p>或者更具体些（复现方法是在 <code>bl vTaskSwitchContext</code> 中打断点，运行到之前的 <code>os_delay_ms(500)</code> 之后，第一次 <code>bl</code> 是正常的，我们继续运行，第二次 <code>bl</code> 就需要进去这个函数里面看是哪里被修改了）：</p>
-<p><img src="/../images/%E8%B0%83%E8%AF%95%E8%BF%87%E7%A8%8B-%E6%89%BE%E5%87%BA%E5%93%AA%E4%B8%80%E5%8F%A5%E4%BF%AE%E6%94%B9%E4%BA%86pxCurrentTCB%E5%AF%B9%E5%BA%94%E7%9A%84%E5%80%BC.png" alt="调试过程-找出哪一句修改了pxCurrentTCB对应的值"></p>
+<p><img src="/images/freertos-stackovf/%E8%B0%83%E8%AF%95%E8%BF%87%E7%A8%8B-%E6%89%BE%E5%87%BA%E5%93%AA%E4%B8%80%E5%8F%A5%E4%BF%AE%E6%94%B9%E4%BA%86pxCurrentTCB%E5%AF%B9%E5%BA%94%E7%9A%84%E5%80%BC.png" alt="调试过程-找出哪一句修改了pxCurrentTCB对应的值"></p>
 <p>这三句是“帮凶”：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/* 将原本 r3[4] 的值重新给 r3 */</span><br><span class="line">ldr r3, [r3, #4]</span><br><span class="line">/* 将 r3[12] 的值（被篡改成 0x1fff）取出并放到 r2 */</span><br><span class="line">ldr r2, [r3, #12]</span><br><span class="line">/* 将 pxCurrentTCB 存到 r3 */</span><br><span class="line">ldr r3, [pc, #28]</span><br><span class="line">/* 将当前 r2 的值更新到 r3[0] (pxTopOfStack) */</span><br><span class="line">str r2, [r3, #0]</span><br></pre></td></tr></table></figure>
 
 <p>执行完这三句之后我们可以看到确实是被修改了的：</p>
-<p><img src="/../images/%E8%B0%83%E8%AF%95%E8%BF%87%E7%A8%8B-GDB%E9%AA%8C%E8%AF%81pxCurrentTCB%E5%80%BC%E6%98%AF%E5%90%A6%E8%A2%AB%E4%BF%AE%E6%94%B9.png" alt="调试过程-GDB验证pxCurrentTCB值是否被修改"></p>
+<p><img src="/images/freertos-stackovf/%E8%B0%83%E8%AF%95%E8%BF%87%E7%A8%8B-GDB%E9%AA%8C%E8%AF%81pxCurrentTCB%E5%80%BC%E6%98%AF%E5%90%A6%E8%A2%AB%E4%BF%AE%E6%94%B9.png" alt="调试过程-GDB验证pxCurrentTCB值是否被修改"></p>
 <p>进而导致下面的 <code>ldmia</code> 因为垃圾值内存没对齐而炸掉。</p>
 <p>然后我们再来找一下真凶，由于值在 <code>r3[12]</code>， 而 r3 此时为 <code>0x200014cc</code>（执行 <code>ldr r3, [r3, #4]</code> 那一句时），于是我们重新开始调试，并在 GDB 中输入：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(gdb) watch *(uint32_t *)(0x200014cc+0x0c) if *(uint32_t *)(0x200014cc+0x0c) == 0x1fff</span><br></pre></td></tr></table></figure>
