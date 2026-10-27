@@ -1,8 +1,22 @@
+# --- 操作系统 ---
 .DS_Store
 Thumbs.db
-db.json
-*.log
+
+# --- 编辑器 ---
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- Node 依赖 ---
 node_modules/
+
+# --- Hexo 生成物 / 本地缓存 ---
+db.json
 public/
 .deploy*/
 _multiconfig.yml
+*.log
+
+# --- 主题自带的演示截图，站点构建用不到 ---
+themes/pln/screenShots/
