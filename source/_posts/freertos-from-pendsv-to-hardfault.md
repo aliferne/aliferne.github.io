@@ -246,7 +246,7 @@ Hardware watchpoint 1: *(uint32_t *)0x20004630
 
 或者更具体些（复现方法是在 `bl vTaskSwitchContext` 中打断点，运行到之前的 `os_delay_ms(500)` 之后，第一次 `bl` 是正常的，我们继续运行，第二次 `bl` 就需要进去这个函数里面看是哪里被修改了）：
 
-![调试过程-找出哪一句修改了pxCurrentTCB对应的值](../images/调试过程-找出哪一句修改了pxCurrentTCB对应的值.png)
+![调试过程-找出哪一句修改了pxCurrentTCB对应的值](/images/freertos-stackovf/调试过程-找出哪一句修改了pxCurrentTCB对应的值.png)
 
 这三句是“帮凶”：
 
@@ -263,7 +263,7 @@ str r2, [r3, #0]
 
 执行完这三句之后我们可以看到确实是被修改了的：
 
-![调试过程-GDB验证pxCurrentTCB值是否被修改](../images/调试过程-GDB验证pxCurrentTCB值是否被修改.png)
+![调试过程-GDB验证pxCurrentTCB值是否被修改](/images/freertos-stackovf/调试过程-GDB验证pxCurrentTCB值是否被修改.png)
 
 进而导致下面的 `ldmia` 因为垃圾值内存没对齐而炸掉。
 

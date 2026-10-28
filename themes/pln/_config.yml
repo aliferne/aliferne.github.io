@@ -3,6 +3,7 @@ logo: Ferne
 
 # 右上角“链接”下拉菜单
 more:
+  友链: /links/
   GitHub: https://github.com/aliferne
 
 # 页脚右侧信息

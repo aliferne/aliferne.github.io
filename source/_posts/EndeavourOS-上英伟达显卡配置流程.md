@@ -51,9 +51,7 @@ sudo ln -s /path/to/MuseDash.desktop /usr/share/applications/MuseDash.desktop
 
 郑重提醒：为了避免你设置完之后整个电脑桌面环境炸掉还不知道怎么退档，强烈建议你先装 `timeshift` 然后先保存一份快照，操作有风险，谨慎执行下面的命令，在没有搞清楚命令是干什么的之前都尽量不要执行，此外也不要完全信任 AI 给你的 “最终解决方案”，不然很有可能这一站将会是你 Linux 生涯的终点站。
 
-先说下我个人电脑情况，我的电脑是华硕天选 5 Pro，装的是 Endeavour OS：
-
-![fastfecth-result](./images/fastfetch-result.png)
+先说下我个人电脑情况，我的电脑是华硕天选 5 Pro，装的是 Endeavour OS。
 
 我更习惯 Wayland 多一点，用 X11 的时候总觉得中文字体有点糊，不过我下面遇到的使用独显直接渲染或者混合模式渲染会导致桌面卡死的问题，则是在 X11 和 Wayland 上都有。
 
