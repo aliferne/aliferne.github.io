@@ -1,0 +1,240 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="google-site-verification" content="" />
+  <meta name="referrer" content="unsafe-url">
+  
+  <title>gitea &amp; cadddy 的简易配置指南</title>
+  <meta name="author" content="Ferne">
+  <meta name="description" content="Ferne 的编程小屋，记录各种开发日常/碎碎念">
+  
+  
+  <meta property="og:title" content="gitea &amp; cadddy 的简易配置指南"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta property="og:site_name" content="Ferne 的编程小屋"/>
+  <link href="/images/amiya-avator.jpg" sizes="180x180" rel="apple-touch-icon-precomposed">
+  
+  <link rel="stylesheet" href="/css/m.min.css">
+  <link rel="icon" type="image/jpeg" href="/images/amiya-avator.jpg">
+  
+
+<meta name="generator" content="Hexo 8.1.2"></head>
+
+<body>
+  <a id="top"></a>
+  <div id="main">
+    <div class="main-ctnr">
+      <div class="behind">
+  <a href="/" class="back black-color">
+    <svg class="i-close" viewBox="0 0 32 32" width="22" height="22" fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+        <path d="M2 30 L30 2 M30 30 L2 2"></path>
+    </svg>
+  </a>
+  
+    <div class="description">
+      &nbsp;Die Melodie von Null und Eins
+    </div>
+    
+</div>
+
+
+  <article class="standard post">
+    <div class="title">
+      
+  
+    <h1 class="page-title center">
+        gitea &amp; cadddy 的简易配置指南
+    </h1>
+  
+
+
+    </div>
+    <div class="meta center">
+      <time datetime="2026-10-29T03:00:00.000Z" itemprop="datePublished">
+  <svg class="i-calendar" viewBox="0 0 32 32" width="16" height="16" fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+    <path d="M2 6 L2 30 30 30 30 6 Z M2 15 L30 15 M7 3 L7 9 M13 3 L13 9 M19 3 L19 9 M25 3 L25 9"></path>
+  </svg>
+  &nbsp;
+  2026-10-29
+</time>
+
+
+    
+    &nbsp;
+    <svg class="i-tag" viewBox="0 0 32 32" width="16" height="16" fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+      <circle cx="24" cy="8" r="2"></circle>
+      <path d="M2 18 L18 2 30 2 30 14 14 30 Z"></path>
+    </svg>
+    &nbsp;
+    <a href="/categories/linux/">linux</a>
+
+
+
+
+    
+    &nbsp;
+    <svg class="i-tag" viewBox="0 0 32 32" width="16" height="16" fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+      <circle cx="24" cy="8" r="2"></circle>
+      <path d="M2 18 L18 2 30 2 30 14 14 30 Z"></path>
+    </svg>
+    &nbsp;
+    <a href="/tags/gitea/">gitea</a>·<a href="/tags/caddy/">caddy</a>
+
+
+    </div>
+    <hr>
+    
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#hosts-%E6%96%87%E4%BB%B6%E4%BF%AE%E6%94%B9"><span class="toc-text">hosts 文件修改</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Gitea-%E9%85%8D%E7%BD%AE"><span class="toc-text">Gitea 配置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Caddy-%E9%85%8D%E7%BD%AE"><span class="toc-text">Caddy 配置</span></a></li></ol>
+    
+    <div class="picture-container">
+      
+    </div>
+    <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这只是一篇非常简单的部署文章，文章内容可能基本上只适用于我这个环境。</p>
+<p>先说背景，大约几个月前，我从海鲜市场那里购置了一个迷你主机，之后就一直想把它用起来，偶然了解到了 easytier 这个东西之后，我解决了远程连接的问题 (p2p)，但是之后就没怎么动过这台电脑了，现在就单纯想着干脆搞个 Git 自托管服务吧，参考了 AI 建议和一些博客&#x2F;文档之后，决定搞个 Gitea + Caddy 的服务模式。</p>
+<p>下文以本机指代我在使用的电脑，主机指代服务器（放在家里）。</p>
+<h1 id="hosts-文件修改"><a href="#hosts-文件修改" class="headerlink" title="hosts 文件修改"></a>hosts 文件修改</h1><p>这里涉及到一些隐私问题，因此 IP 地址等经过一定的修改，而且我没什么运维经验，请各位不要想着攻击我的肉鸡，真的不耐🌿的(TAT)</p>
+<p>我的主机 P2P 虚拟 IP 是 20.132.132.1 (下称 PIP)，但是每次都要输入这玩意其实挺烦的，因此就想着能不能把它映射成域名。</p>
+<p>我们都知道客户端访问网站，会经过 DNS 解析把域名解析为实际的 IP 地址之后再去访问对应的服务器，然后服务器网关再根据过来的 IP 和载荷决定要转给哪个端口上运行的服务去处理。前者是 DNS 解析，后者则是反向代理，这里只简要介绍这么多。</p>
+<p>我们现在需要处理的是 DNS 解析部分，当然我们的主机并不跑在公网上，因此不需要（也改不了）公共域名解析服务，本机配置文件有个叫做 <code>/etc/hosts</code> 的，那个实际上就是本机本地的 DNS 解析服务（当然也有 dnsmasq，但我们只是需要一个最简单的方法）。</p>
+<p>打开这个文件，加入：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">20.132.132.1 ferneserver.net</span><br></pre></td></tr></table></figure>
+
+<p>然后保存，接下来 <code>ping ferneserver.net</code>，发现可以 ping 通过，<br>然后 <code>ssh ferne@ferneserver.net</code> 并输入密码验证：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&gt; ssh ferne@ferneserver.net</span><br><span class="line"># 省略一堆内容</span><br><span class="line">Last login: Wed Oct 28 23:03:13 2026 from 20.132.132.2</span><br><span class="line">Welcome to fish, the friendly interactive shell</span><br><span class="line">Type help for instructions on how to use fish</span><br><span class="line">ferne@server ~&gt;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到登录进来了，也就是说 DNS 解析这一关我们搞定了，不过注意，此时 <code>curl -Ivv http://ferneserver.net/</code> 是没有用的（连不到主机），原因在于我们还没配置反代，现在只有 ssh 在跑， 因此这里实际上只是通过 DNS 解析访问了主机的 ssh 服务。</p>
+<h1 id="Gitea-配置"><a href="#Gitea-配置" class="headerlink" title="Gitea 配置"></a>Gitea 配置</h1><p>这里基本上就是按照 <a target="_blank" rel="noopener" href="https://docs.gitea.com/zh-cn/installation/install-from-binary/">文档</a> 在配置，我们讲一些命令内容。</p>
+<p>一开始会让你创建一个叫 git 的用户，这一步注意 <code>--disable-password</code> 加进去之后就没办法 <code>su - git</code> 去登录了，我们要以 git 用户跑对应命令的话，只能用 <code>sudo -u git &lt;cmd&gt;</code>，这样子就会要求验证当前用户的密码而不是 git 这个用户的密码了。</p>
+<p>创建完工作路径并将 gitea 复制到全局位置之后运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sudo</span> -u git GITEA_WORK_DIR=/var/lib/gitea/ /usr/local/bin/gitea web --config /etc/gitea/app.ini</span><br></pre></td></tr></table></figure>
+
+<p>接下来会出现一个默认监听 localhost:3000 的网页，此时我们在本机浏览器只要输入 <code>http://ferneserver.net:3000</code> 就能访问这个配置页面，然后按照提示配置好就可以了。</p>
+<p>配置完成之后再修改一些文件的权限：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">chmod</span> 750 /etc/gitea</span><br><span class="line"><span class="built_in">chmod</span> 640 /etc/gitea/app.ini</span><br></pre></td></tr></table></figure>
+
+<p>现在我们需要配置 systemd 服务，这一步就相当简单了，打开 <a target="_blank" rel="noopener" href="https://github.com/go-gitea/gitea/blob/main/contrib/service/systemd/gitea.service">参考配置</a> 并复制粘贴内容到新创建的 <code>/etc/systemd/system/gitea.service</code> 中即可，最后运行 <code>sudo systemctl start --now gitea</code> 即可。</p>
+<h1 id="Caddy-配置"><a href="#Caddy-配置" class="headerlink" title="Caddy 配置"></a>Caddy 配置</h1><p>注意以下内容我用的浏览器都是 Firefox, Edge 很喜欢在明确不要 https 的网站上加 https，导致我在 Edge 上经常打不开服务，都不知道服务通没通……</p>
+<p>Caddy 的介绍可以看 <a target="_blank" rel="noopener" href="https://caddyserver.com.cn/docs/">文档</a>，我们需要的是它的反代功能。</p>
+<p>简单参考一下教程的快速入门之后，我们直接来写 Caddyfile，由于本机已经配置好了 DNS<br>解析服务，我们直接写入：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">http://ferneserver.net &#123;</span><br><span class="line">    root * /var/www/html</span><br><span class="line">    file_server &#123;</span><br><span class="line">        index index.html</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">http://git.ferneserver.net &#123;</span><br><span class="line">    reverse_proxy :3000</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>http://</code> 用于显式声明我们不需要 caddy 默认使用的 https 模式，由于我们没有 SSL 证书，验证肯定是不需要的（反正就自己用）。</p>
+<p>第一行表示访问 <code>http://ferneserver.net</code> 时将站点的根目录设置到 <code>/var/www/html</code> 下，并对外提供根目录下的 <code>index.html</code> 这个文件（这是默认的，我只是写明了），这个 html 文件的内容随便写就行。</p>
+<p>第二行是我们的反代，当访问 <code>http://git.ferneserver.net</code> 时反代到 <code>localhost:3000</code> 端口，以对外提供 gitea 服务。</p>
+<p>最后在主机上运行 <code>sudo caddy run --config Caddyfile --watch</code></p>
+<p>这样之后使用 <code>curl -I</code> 分别测试这两个地址：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&gt; curl -I ferneserver.net</span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Accept-Ranges: bytes</span><br><span class="line">Content-Length: 18753</span><br><span class="line">Content-Type: text/html; charset=utf-8</span><br><span class="line">Etag: &quot;dluyi1aldhc0-egx&quot;</span><br><span class="line">Last-Modified: Sat, 03 Oct 2026 05:33:27 GMT</span><br><span class="line">Server: Caddy</span><br><span class="line">Vary: Accept-Encoding</span><br><span class="line">Date: Thu, 29 Oct 2026 02:25:45 GMT</span><br></pre></td></tr></table></figure>
+
+<p>然后看看 git 子域名的服务：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&gt; curl -I git.ferneserver.net</span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line">Accept-Ranges: bytes</span><br><span class="line">Content-Length: 18753</span><br><span class="line">Content-Type: text/html; charset=utf-8</span><br><span class="line">Etag: &quot;dluyi1aldhc0-egx&quot;</span><br><span class="line">Last-Modified: Sat, 03 Oct 2026 05:33:27 GMT</span><br><span class="line">Server: Caddy</span><br><span class="line">Vary: Accept-Encoding</span><br><span class="line">Date: Thu, 29 Oct 2026 02:26:07 GMT</span><br></pre></td></tr></table></figure>
+
+<p>状态码都是 200，服务也是 caddy 在提供，这就没什么问题了。 同时我们接下来要启动 systemd 服务，这部分看 <a target="_blank" rel="noopener" href="https://caddyserver.com.cn/docs/running">文档</a> 就行，默认情况下是读取 <code>/etc/caddy/Caddyfile</code> 的配置文件，因此需要 <code>sudo ln</code> 过去（注意这里如果配置文件在 <code>/home</code> 目录下则不能创建软链接，原因下面讲），或者直接 <code>cp</code> 过去也大差不差。</p>
+<p>启动服务之后同理，再用 <code>curl -I</code> 测试，能通，那么就都结束了。</p>
+<p>需要注意， <strong>当使用 systemd 启动 caddy 时， caddy 对 <code>/home</code> 目录下的所有文件都是无法访问的</strong> ，请确保复制到别的地方&#x2F;创建硬链接到别的地方，否则可能会 404</p>
+<p>然后打开浏览器看一下，发现也是 OK 的：</p>
+<p>根服务：</p>
+<p><img src="/images/gitea-cadddy-%E7%9A%84%E7%AE%80%E6%98%93%E9%85%8D%E7%BD%AE%E6%8C%87%E5%8D%97/access-root.png" alt="access-root"></p>
+<p>Git 子服务：</p>
+<p><img src="/images/gitea-cadddy-%E7%9A%84%E7%AE%80%E6%98%93%E9%85%8D%E7%BD%AE%E6%8C%87%E5%8D%97/access-subsrv-git.png" alt="access-subsrv-git"></p>
+<p>All Done!</p>
+<hr>
+
+
+  </article>
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  <div class="busuanzi center">
+    页阅读量:&nbsp;<span id="busuanzi_value_page_pv"></span>&nbsp;・&nbsp;
+    站访问量:&nbsp;<span id="busuanzi_value_site_pv"></span>&nbsp;・&nbsp;
+    站访客数:&nbsp;<span id="busuanzi_value_site_uv"></span>
+  </div>
+
+
+    
+
+
+
+
+
+    </div>
+  </div>
+  <footer class="page-footer"><div class="clearfix">
+</div>
+<div class="right-foot">
+    <div class="firstrow">
+        <a href="#top" target="_self">
+        <svg class="i-caret-right" viewBox="0 0 32 32" width="24" height="24" fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+            <path d="M10 30 L26 16 10 2 Z"></path>
+        </svg>
+        </a>
+        © 2026 Ferne
+    </div>
+    <div class="secondrow">
+        <a target="_blank" rel="noopener" href="https://github.com/aliferne">
+        GitHub
+        </a>
+    </div>
+</div>
+<div class="clearfix">
+</div>
+</footer>
+  <script type="text/javascript">
+
+// disqus scripts
+
+
+// dropdown scripts
+function $(s) {
+    return document.querySelector(s)
+  }
+
+  function $$(s) {
+    return document.querySelectorAll(s)
+  }
+  var dropDownElArr = $$('.dropdown')
+  for (var i = 0; i < dropDownElArr.length; i += 1) {
+    dropDownElArr[i].addEventListener('click', function(event) {
+      var content = this.querySelector('.dropdown-content')
+      event.stopPropagation()
+      if (content.className.indexOf('open') < 0) {
+        content.classList.add('open')
+      } else {
+        content.classList.remove('open')
+      }
+    })
+  }
+  document.body.addEventListener('click', function() {
+    var dropDownContentElArr = $$('.dropdown-content')
+    for (var i = 0; i < dropDownContentElArr.length; i += 1) {
+      dropDownContentElArr[i].classList.remove('open')
+    }
+  })
+
+  // smooth scroll
+  $$('a[href^="#"]').forEach(e=>{
+    e.addEventListener("click", function(e) {
+      e.preventDefault();
+      var t = this.getAttribute("href").substr(1);
+      $(`[id='${decodeURIComponent(t)}']`).scrollIntoView({
+        behavior: "smooth"
+      }),
+      t === "top" ? history.replaceState(null, null, " ") : history.pushState(null, null, `#${t}`)
+    })
+  })
+
+// search
+var searchEl = document.querySelector("#local-search-input")
+if (searchEl) searchEl.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    var s = e.target.value
+    window.open('https://www.google.com/search?q=site:' + location.hostname + '%20' + encodeURIComponent(s), '_blank').focus()
+  }
+})
+
+</script>
+
+</body>
+</html>
