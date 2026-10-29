@@ -107,6 +107,7 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&gt; ssh ferne@ferneserver.net</span><br><span class="line"># 省略一堆内容</span><br><span class="line">Last login: Wed Oct 28 23:03:13 2026 from 20.132.132.2</span><br><span class="line">Welcome to fish, the friendly interactive shell</span><br><span class="line">Type help for instructions on how to use fish</span><br><span class="line">ferne@server ~&gt;</span><br></pre></td></tr></table></figure>
 
 <p>可以看到登录进来了，也就是说 DNS 解析这一关我们搞定了，不过注意，此时 <code>curl -Ivv http://ferneserver.net/</code> 是没有用的（连不到主机），原因在于我们还没配置反代，现在只有 ssh 在跑， 因此这里实际上只是通过 DNS 解析访问了主机的 ssh 服务。</p>
+<p><strong>hosts 文件有个缺点：不支持通配符，因此创建一次子域名实际上就要再编辑一次该文件，而且是“本机 DNS<br>解析服务”， 那肯定只对这台机器有效</strong>。嘛，不过至少能用，对我来说这就够了。</p>
 <h1 id="Gitea-配置"><a href="#Gitea-配置" class="headerlink" title="Gitea 配置"></a>Gitea 配置</h1><p>这里基本上就是按照 <a target="_blank" rel="noopener" href="https://docs.gitea.com/zh-cn/installation/install-from-binary/">文档</a> 在配置，我们讲一些命令内容。</p>
 <p>一开始会让你创建一个叫 git 的用户，这一步注意 <code>--disable-password</code> 加进去之后就没办法 <code>su - git</code> 去登录了，我们要以 git 用户跑对应命令的话，只能用 <code>sudo -u git &lt;cmd&gt;</code>，这样子就会要求验证当前用户的密码而不是 git 这个用户的密码了。</p>
 <p>创建完工作路径并将 gitea 复制到全局位置之后运行：</p>
@@ -117,6 +118,9 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">chmod</span> 750 /etc/gitea</span><br><span class="line"><span class="built_in">chmod</span> 640 /etc/gitea/app.ini</span><br></pre></td></tr></table></figure>
 
 <p>现在我们需要配置 systemd 服务，这一步就相当简单了，打开 <a target="_blank" rel="noopener" href="https://github.com/go-gitea/gitea/blob/main/contrib/service/systemd/gitea.service">参考配置</a> 并复制粘贴内容到新创建的 <code>/etc/systemd/system/gitea.service</code> 中即可，最后运行 <code>sudo systemctl start --now gitea</code> 即可。</p>
+<p>然后我们还是需要改一下 hosts 文件，再次加入：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">20.132.132.1 git.ferneserver.net</span><br></pre></td></tr></table></figure>
+
 <h1 id="Caddy-配置"><a href="#Caddy-配置" class="headerlink" title="Caddy 配置"></a>Caddy 配置</h1><p>注意以下内容我用的浏览器都是 Firefox, Edge 很喜欢在明确不要 https 的网站上加 https，导致我在 Edge 上经常打不开服务，都不知道服务通没通……</p>
 <p>Caddy 的介绍可以看 <a target="_blank" rel="noopener" href="https://caddyserver.com.cn/docs/">文档</a>，我们需要的是它的反代功能。</p>
 <p>简单参考一下教程的快速入门之后，我们直接来写 Caddyfile，由于本机已经配置好了 DNS<br>解析服务，我们直接写入：</p>
