@@ -267,8 +267,7 @@
 <li>加载任务 B 的上下文（出栈）</li>
 </ol>
 <p>然后把主动权还给任务 B 即可 (<code>bx r14</code>)。</p>
-<p>![PendSV 上下文切换][PendSV 上下文切换]</p>
-<p><a href="#freertos-%E5%86%85%E7%9A%84-pendsv-%E5%AE%9E%E7%8E%B0">FreeRTOS 内的代码</a></p>
+<p><img src="/images/freertos-stackovf/PendSV%E4%B8%8A%E4%B8%8B%E6%96%87%E5%88%87%E6%8D%A2.png" alt="PendSV 上下文切换"></p>
 <h3 id="AAPCS-规范"><a href="#AAPCS-规范" class="headerlink" title="AAPCS 规范"></a>AAPCS 规范</h3><p>AAPCS 规范，即 ARM 架构过程调用标准，它规定了编译器生成的汇编代码对 CPU 的操作约定（手写汇编最好也要遵守）。</p>
 <p>该标准允许 C 函数修改 R0～R3，R12，R14（LR） 以及 PSR，如果要修改 R4～R11，则应当将这些寄存器保存到栈中，并在函数结束前将其恢复。</p>
 <p>R0<del>R3, R12, LR, PSR 为“调用者保存寄存器”，若在函数调用后还需要使用这些寄存器的数值，就必须先行保存到内存中，而 R4</del>R11 为“被调用者保存寄存器”，被调用的子程序&#x2F;函数需要保证这些值在函数结束时不会发生变化，不过在执行时可以发生变化，只是要确保函数返回时要恢复为初始值。</p>
