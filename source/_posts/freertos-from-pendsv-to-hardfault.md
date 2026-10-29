@@ -490,9 +490,7 @@ OS 内核的执行可由下面条件触发：
 
 然后把主动权还给任务 B 即可 (`bx r14`)。
 
-![PendSV 上下文切换][PendSV 上下文切换]
-
-[FreeRTOS 内的代码](#freertos-内的-pendsv-实现)
+![PendSV 上下文切换][PendSV上下文切换]
 
 ### AAPCS 规范
 
