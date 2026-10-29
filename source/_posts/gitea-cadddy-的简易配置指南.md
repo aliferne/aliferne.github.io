@@ -46,6 +46,9 @@ ferne@server ~>
 
 可以看到登录进来了，也就是说 DNS 解析这一关我们搞定了，不过注意，此时 `curl -Ivv http://ferneserver.net/` 是没有用的（连不到主机），原因在于我们还没配置反代，现在只有 ssh 在跑， 因此这里实际上只是通过 DNS 解析访问了主机的 ssh 服务。
 
+**hosts 文件有个缺点：不支持通配符，因此创建一次子域名实际上就要再编辑一次该文件，而且是“本机 DNS
+解析服务”， 那肯定只对这台机器有效**。嘛，不过至少能用，对我来说这就够了。
+
 # Gitea 配置
 
 这里基本上就是按照 [文档][gitea docs - deployment] 在配置，我们讲一些命令内容。
@@ -70,6 +73,11 @@ chmod 640 /etc/gitea/app.ini
 
 现在我们需要配置 systemd 服务，这一步就相当简单了，打开 [参考配置][gitea systemd service] 并复制粘贴内容到新创建的 `/etc/systemd/system/gitea.service` 中即可，最后运行 `sudo systemctl start --now gitea` 即可。
 
+然后我们还是需要改一下 hosts 文件，再次加入：
+
+```
+20.132.132.1 git.ferneserver.net
+```
 
 # Caddy 配置
 
