@@ -107,7 +107,7 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&gt; ssh ferne@ferneserver.net</span><br><span class="line"># 省略一堆内容</span><br><span class="line">Last login: Wed Oct 28 23:03:13 2026 from 20.132.132.2</span><br><span class="line">Welcome to fish, the friendly interactive shell</span><br><span class="line">Type help for instructions on how to use fish</span><br><span class="line">ferne@server ~&gt;</span><br></pre></td></tr></table></figure>
 
 <p>可以看到登录进来了，也就是说 DNS 解析这一关我们搞定了，不过注意，此时 <code>curl -Ivv http://ferneserver.net/</code> 是没有用的（连不到主机），原因在于我们还没配置反代，现在只有 ssh 在跑， 因此这里实际上只是通过 DNS 解析访问了主机的 ssh 服务。</p>
-<p><strong>hosts 文件有个缺点：不支持通配符，因此创建一次子域名实际上就要再编辑一次该文件，而且是“本机 DNS<br>解析服务”， 那肯定只对这台机器有效</strong>。嘛，不过至少能用，对我来说这就够了。</p>
+<p><strong>hosts 文件有个缺点：不支持通配符，因此创建一次子域名实际上就要再编辑一次该文件，而且是“本机 DNS 解析服务”， 那肯定只对这台机器有效</strong>。嘛，不过至少能用，对我来说这就够了。</p>
 <h1 id="Gitea-配置"><a href="#Gitea-配置" class="headerlink" title="Gitea 配置"></a>Gitea 配置</h1><p>这里基本上就是按照 <a target="_blank" rel="noopener" href="https://docs.gitea.com/zh-cn/installation/install-from-binary/">文档</a> 在配置，我们讲一些命令内容。</p>
 <p>一开始会让你创建一个叫 git 的用户，这一步注意 <code>--disable-password</code> 加进去之后就没办法 <code>su - git</code> 去登录了，我们要以 git 用户跑对应命令的话，只能用 <code>sudo -u git &lt;cmd&gt;</code>，这样子就会要求验证当前用户的密码而不是 git 这个用户的密码了。</p>
 <p>创建完工作路径并将 gitea 复制到全局位置之后运行：</p>
