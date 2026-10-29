@@ -1,5 +1,5 @@
 ---
-title: gitea & cadddy 的简易配置指南
+title: Gitea & Caddy 的简易配置指南
 date: 2026-10-29 11:00:00
 categories:
 - linux
@@ -165,6 +165,6 @@ All Done!
 [caddy systemd service]: https://caddyserver.com.cn/docs/running
 [用户访问网站的完整流程]: https://www.cnblogs.com/yihr/p/9720715.html
 
-[access-root]: /images/gitea-cadddy-的简易配置指南/access-root.png
-[access-subsrv-git]: /images/gitea-cadddy-的简易配置指南/access-subsrv-git.png
+[access-root]: /images/gitea-caddy-simple-config-guide/access-root.png
+[access-subsrv-git]: /images/gitea-caddy-simple-config-guide/access-subsrv-git.png
 
