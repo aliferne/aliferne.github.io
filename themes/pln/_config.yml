@@ -21,7 +21,7 @@ excerpt_num: 120
 toc: true
 
 # 是否启用 MathJax（文章里有 LaTeX 公式时再打开）
-latex: true
+latex: false
 
 # 评论系统（Valine），默认关闭
 # 文档：https://valine.js.org
