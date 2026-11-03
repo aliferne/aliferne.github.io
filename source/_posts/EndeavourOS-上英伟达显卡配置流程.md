@@ -2,7 +2,7 @@
 title: EndeavourOS 上英伟达显卡配置流程
 date: 2026-02-09 13:42:34
 categories:
-- linux
+- 技术
 tags:
 - linux
 - nvidia

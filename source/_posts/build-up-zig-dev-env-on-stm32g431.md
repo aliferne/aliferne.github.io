@@ -2,8 +2,9 @@
 title: "[STM32] STM32G431 搭建 Zig 开发环境"
 date: 2026-02-17 18:00:00
 categories:
-- embedded
+- 技术
 tags:
+- embedded
 - mcu
 - zig
 - c

@@ -2,8 +2,9 @@
 title: Gitea & Caddy 的简易配置指南
 date: 2026-10-29 11:00:00
 categories:
-- linux
+- 技术
 tags:
+- linux
 - gitea
 - caddy
 ---

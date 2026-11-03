@@ -2,8 +2,9 @@
 title: FreeRTOS 的上下文切换与栈溢出 —— 从 PendSV 到 HardFault 的调试全流程
 date: 2026-06-24 17:42:34
 categories:
-- embedded
+- 技术
 tags:
+- embedded
 - mcu
 - rtos
 ---

@@ -2,8 +2,9 @@
 title: 如何在 FreeRTOS 中高效调试栈溢出错误
 date: 2026-06-21 13:42:34
 categories:
-- embedded
+- 技术
 tags:
+- embedded
 - mcu
 - rtos
 ---
