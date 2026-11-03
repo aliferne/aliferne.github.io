@@ -164,7 +164,8 @@ var searchEl = document.querySelector("#local-search-input")
 if (searchEl) searchEl.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     var s = e.target.value
-    window.open('https://www.google.com/search?q=site:' + location.hostname + '%20' + encodeURIComponent(s), '_blank').focus()
+    // notice that google is not available in China, replaced with bing then
+    window.open('https://www.bing.com/search?q=site:' + location.hostname + '%20' + encodeURIComponent(s), '_blank').focus()
   }
 })
 

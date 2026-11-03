@@ -8,7 +8,7 @@
   <meta name="google-site-verification" content="" />
   <meta name="referrer" content="unsafe-url">
   
-  <title>linux</title>
+  <title>技术</title>
   <meta name="author" content="Ferne">
   <meta name="description" content="Ferne 的编程小屋，记录各种开发日常/碎碎念">
   
@@ -47,7 +47,7 @@
       <ul class="dropdown-content">
 
           
-           <div><a href="/categories/linux/">linux</a></div><div><a href="/categories/embedded/">embedded</a></div>
+           <div><a href="/categories/技术/">技术</a></div>
 
       </ul>
 
@@ -103,10 +103,10 @@
     <path d="M2 18 L18 2 30 2 30 14 14 30 Z"></path>
   </svg>
   
-  linux
+  技术
 </h1>
 <div class="archive-num">
-  该分类共 2 篇文章
+  该分类共 5 篇文章
 </div>
 <div class="archive">
   
@@ -137,6 +137,54 @@
                 </div>
                 <hr>
                 
+    
+      
+
+      
+                <div class="archive-item">
+                    <div class="archive-time">
+                      06-24
+                    </div>
+                    <div class="archive-detail">
+                      <a href="/2026/06/24/freertos-from-pendsv-to-hardfault/" class="archive-link">
+                        FreeRTOS 的上下文切换与栈溢出 —— 从 PendSV 到 HardFault 的调试全流程
+                      </a>
+                    </div>
+                </div>
+                <hr>
+      
+    
+      
+
+      
+                <div class="archive-item">
+                    <div class="archive-time">
+                      06-21
+                    </div>
+                    <div class="archive-detail">
+                      <a href="/2026/06/21/freertos-how-to-debug-stackovf-effectively/" class="archive-link">
+                        如何在 FreeRTOS 中高效调试栈溢出错误
+                      </a>
+                    </div>
+                </div>
+                <hr>
+      
+    
+      
+
+      
+                <div class="archive-item">
+                    <div class="archive-time">
+                      02-17
+                    </div>
+                    <div class="archive-detail">
+                      <a href="/2026/02/17/build-up-zig-dev-env-on-stm32g431/" class="archive-link">
+                        [STM32] STM32G431 搭建 Zig 开发环境
+                      </a>
+                    </div>
+                </div>
+                <hr>
+      
     
       
 
@@ -228,7 +276,8 @@ var searchEl = document.querySelector("#local-search-input")
 if (searchEl) searchEl.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     var s = e.target.value
-    window.open('https://www.google.com/search?q=site:' + location.hostname + '%20' + encodeURIComponent(s), '_blank').focus()
+    // notice that google is not available in China, replaced with bing then
+    window.open('https://www.bing.com/search?q=site:' + location.hostname + '%20' + encodeURIComponent(s), '_blank').focus()
   }
 })
 

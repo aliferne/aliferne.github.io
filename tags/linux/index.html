@@ -47,7 +47,7 @@
       <ul class="dropdown-content">
 
           
-           <div><a href="/categories/linux/">linux</a></div><div><a href="/categories/embedded/">embedded</a></div>
+           <div><a href="/categories/技术/">技术</a></div>
 
       </ul>
 
@@ -106,7 +106,7 @@
   linux
 </h1>
 <div class="archive-num">
-  该分类共 1 篇文章
+  该分类共 2 篇文章
 </div>
 <div class="archive">
   
@@ -127,6 +127,22 @@
             <ul class="archive-list">
                 <div class="archive-item">
                     <div class="archive-time">
+                      10-29
+                    </div>
+                    <div class="archive-detail">
+                      <a href="/2026/10/29/gitea-caddy-simple-config-guide/" class="archive-link">
+                        Gitea &amp; Caddy 的简易配置指南
+                      </a>
+                    </div>
+                </div>
+                <hr>
+                
+    
+      
+
+      
+                <div class="archive-item">
+                    <div class="archive-time">
                       02-09
                     </div>
                     <div class="archive-detail">
@@ -136,7 +152,7 @@
                     </div>
                 </div>
                 <hr>
-                
+      
     
 </div>
 
@@ -212,7 +228,8 @@ var searchEl = document.querySelector("#local-search-input")
 if (searchEl) searchEl.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     var s = e.target.value
-    window.open('https://www.google.com/search?q=site:' + location.hostname + '%20' + encodeURIComponent(s), '_blank').focus()
+    // notice that google is not available in China, replaced with bing then
+    window.open('https://www.bing.com/search?q=site:' + location.hostname + '%20' + encodeURIComponent(s), '_blank').focus()
   }
 })
 

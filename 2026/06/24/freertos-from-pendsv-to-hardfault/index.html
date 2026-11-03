@@ -70,7 +70,7 @@
       <path d="M2 18 L18 2 30 2 30 14 14 30 Z"></path>
     </svg>
     &nbsp;
-    <a href="/categories/embedded/">embedded</a>
+    <a href="/categories/技术/">技术</a>
 
 
 
@@ -82,7 +82,7 @@
       <path d="M2 18 L18 2 30 2 30 14 14 30 Z"></path>
     </svg>
     &nbsp;
-    <a href="/tags/mcu/">mcu</a>·<a href="/tags/rtos/">rtos</a>
+    <a href="/tags/embedded/">embedded</a>·<a href="/tags/mcu/">mcu</a>·<a href="/tags/rtos/">rtos</a>
 
 
     </div>
@@ -367,7 +367,8 @@ var searchEl = document.querySelector("#local-search-input")
 if (searchEl) searchEl.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     var s = e.target.value
-    window.open('https://www.google.com/search?q=site:' + location.hostname + '%20' + encodeURIComponent(s), '_blank').focus()
+    // notice that google is not available in China, replaced with bing then
+    window.open('https://www.bing.com/search?q=site:' + location.hostname + '%20' + encodeURIComponent(s), '_blank').focus()
   }
 })
 
