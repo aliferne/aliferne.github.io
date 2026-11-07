@@ -4,10 +4,11 @@ logo: Ferne
 # 右上角“链接”下拉菜单
 more:
   友链: /links/
+  About Me: /aboutme/
   GitHub: https://github.com/aliferne
 
 # 页脚右侧信息
-footer_info: © 2024 Ferne
+footer_info: © 2026 Ferne
 
 # 页脚右侧链接
 about:
