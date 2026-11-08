@@ -96,9 +96,7 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: pln
-# 主题配置见 themes/pln/_config.yml
-# 主题仓库: https://github.com/gaoryrt/hexo-theme-pln
+theme: next
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment

@@ -11,6 +11,8 @@ tags:
 
 让我们[书接上回](https://aliferne.github.io/2026/06/21/freertos-how-to-debug-stackovf-effectively/)。
 
+<!-- more -->
+
 ## 深挖栈溢出异常
 
 ### 调用堆栈
