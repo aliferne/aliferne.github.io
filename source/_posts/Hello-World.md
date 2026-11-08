@@ -1,5 +1,5 @@
 ---
-title: hello
+title: Hello World
 date: 2024-06-11 00:00:00
 tags: 杂谈
 ---
