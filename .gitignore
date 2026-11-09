@@ -18,5 +18,3 @@ public/
 _multiconfig.yml
 *.log
 
-# --- 主题自带的演示截图，站点构建用不到 ---
-themes/pln/screenShots/
