@@ -371,22 +371,22 @@ codeblock:
   # Code Highlight theme
   # All available themes: https://theme-next.js.org/highlight/
   theme:
-    light: default
-    dark: stackoverflow-dark
+    light: vs
+    dark: vs2015
   prism:
     light: prism
     dark: prism-dark
   # Add copy button on codeblock
   copy_button:
-    enable: false
+    enable: true
     # Available values: default | flat | mac
-    style:
+    style: default
   # Fold code block
   fold:
-    enable: false
+    enable: true
     height: 500
   # Display language name
-  language: false
+  language: true
 
 back2top:
   enable: true

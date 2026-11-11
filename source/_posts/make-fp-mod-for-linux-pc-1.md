@@ -7,6 +7,7 @@ tags:
 - c
 - linux
 - pam
+- 并发编程
 ---
 
 副标题：指纹模块、Linux 系统编程与 PAM 模块开发二三事
@@ -30,7 +31,7 @@ tags:
 <!-- more -->
 
 {% raw %}
-<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
+<div id="demo" style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
     <iframe src="/images/make-fp-mod-for-linux-pc/fp-mod-unlock-demo.mp4" 
         scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" 
         style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" >
@@ -69,7 +70,7 @@ tags:
 
 系统调用 (Syscall) 是受控的内核入口，借用这一机制，一个程序可以请求内核以自己的名义去执行某些动作，它 **在编程角度上来说和调用 C 语言的 API 并无区别**，但在底层角度，系统调用会涉及到处理器的用户态到核心态的切换、中断机制和汇编等内容，这些内容我们在这里并不是特别关心，但还是需要大概知道一下。
 
-对于 Linux C 系统编程，这些 API **大部分都会在调用失败时返回 -1 并设置对应的 errno 值**，我们可以通过 `strerrno(errno)` 来将错误码转字符串，如果有些系统调用并不遵循该原则，我会特别说明。Linux Syscalls 可以通过 `man syscalls` 来查看，我们本次要用到的系统调用主要是 `open`, `write`, `read` 等。
+对于 Linux C 系统编程，这些 API **大部分都会在调用失败时返回 -1 并设置对应的 errno 值**，我们可以通过 `char *strerror(int errnum);` 来将错误码转字符串，如果有些系统调用并不遵循该原则，我会特别说明。Linux Syscalls 可以通过 `man syscalls` 来查看，我们本次要用到的系统调用主要是 `open`, `write`, `read` 等。
 
 ## 串口设备的打开和基础配置
 
@@ -141,7 +142,7 @@ write:        EF 01 FF FF FF FF 01 00 03 35 00 39
 
 需要注意由于 `vtime`, `vmin` 和 `O_NONBLOCK` 是矛盾的，因此如果设置 **非阻塞** 读，这两个变量就必须要是 0, 不然会导致读越界的 SegFault 问题(我没去琢磨源码，如果有知道原因的大佬还请不吝赐教)。篇幅原因我们只需要了解上面这些内容就足够了，如果想要了解更多东西，可以参考[这篇文章][vtime & vmin]
 
-对于第二点，实际上我们有一个很好用的检测设备是否断连的方法，我们只需要借助 `tcgetattr` 即可，这个函数在尝试获取串口配置失败时会返回 -1, 并设置 errno 为一些特定的值，如果 `errno == EIO`，那么一般就是串口断连了。严谨一些的话可以用 `poll`，但是我没用，这里会在后面解释 TODO:
+对于第二点，实际上我们有一个很好用的检测设备是否断连的方法，我们只需要借助 `tcgetattr` 即可，这个函数在尝试获取串口配置失败时会返回 -1, 并设置 errno 为一些特定的值，如果 `errno == EIO`，那么一般就是串口断连了。严谨一些的话可以用 `poll`，但是我没用，这里会在后面解释
 
 这里可能会有人问，为什么不直接判断 `read` 后的 `errno`，问题在于第一次 `read` 返回的读取字节数为 0, 此时代表的实际上是 `read` 认为读到 EOF 了，这是成功的标志，因此不会设置 `errno`，你就无法通过这个来判断，因此要判断设备是否被拔出就必须再操作一次串口文件，因此就需要调用 `tcgetattr`，这是比较简单的：
 
@@ -161,7 +162,7 @@ write:        EF 01 FF FF FF FF 01 00 03 35 00 39
 当然，首先看下加锁与不加锁的区别，下面是不加锁的：
 
 {% raw %}
-<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
+<div id="withlock" style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
     <iframe src="/images/make-fp-mod-for-linux-pc/fp-zw111-test-without-lock.mp4"
         scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" 
         style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" >
@@ -172,7 +173,7 @@ write:        EF 01 FF FF FF FF 01 00 03 35 00 39
 而这个是加锁的：
 
 {% raw %}
-<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
+<div id="nolock" style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
     <iframe src="/images/make-fp-mod-for-linux-pc/fp-zw111-test-with-lock.mp4"
         scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" 
         style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" >
@@ -207,10 +208,10 @@ Linux 的文件锁分为劝告锁和 [强制锁][mandatory locking] 两种，**�
 
 可以看到上面的三点在这个程序里面要做起来实在是很麻烦，因此索性直接互斥锁得了。
 
-一些题外话：在写这篇文章的时候我手动改了一下已经写好的代码做了点实验，事实证明我是对的，因为使用共享锁，后启动的进程直接卡死了，无论加不加 `LOCK_NB` 选项防止阻塞都一样:
+一些题外话：在写这篇文章的时候我手动改了一下已经写好的代码做了点实验，事实证明我是对的，因为使用共享锁，后启动的进程直接卡死了：
 
 {% raw %}
-<div style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
+<div id="shared-lock" style="position: relative; width: 100%; height: 0; padding-bottom: 75%;">
     <iframe src="/images/make-fp-mod-for-linux-pc/useless-shared-lock.mp4"
         scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" 
         style="position: absolute; width: 100%; height: 100%; Left: 0; top: 0;" >
