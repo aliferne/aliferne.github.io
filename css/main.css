@@ -20,10 +20,10 @@
   --btn-default-hover-bg: transparent;
   --btn-default-hover-color: var(--link-hover-color);
   --btn-default-hover-border-color: var(--link-hover-color);
-  --highlight-background: #f3f3f3;
-  --highlight-foreground: #444;
-  --highlight-gutter-background: #e1e1e1;
-  --highlight-gutter-foreground: #555;
+  --highlight-background: #fff;
+  --highlight-foreground: #000;
+  --highlight-gutter-background: #e5e5e5;
+  --highlight-gutter-foreground: #191919;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -49,10 +49,10 @@
     --btn-default-hover-bg: #666;
     --btn-default-hover-color: #ccc;
     --btn-default-hover-border-color: #666;
-    --highlight-background: #1c1b1b;
-    --highlight-foreground: #fff;
-    --highlight-gutter-background: #323131;
-    --highlight-gutter-foreground: #e8e8e8;
+    --highlight-background: #1e1e1e;
+    --highlight-foreground: #dcdcdc;
+    --highlight-gutter-background: #313131;
+    --highlight-gutter-foreground: #c9c9c9;
     color-scheme: dark;
   }
   img {
@@ -412,109 +412,55 @@ pre code.hljs {
 code.hljs {
   padding: 3px 5px
 }
-/*!
-  Theme: Default
-  Description: Original highlight.js style
-  Author: (c) Ivan Sagalaev <maniac@softwaremaniacs.org>
-  Maintainer: @highlightjs/core-team
-  Website: https://highlightjs.org/
-  License: see project LICENSE
-  Touched: 2021
-*/
 /*
-This is left on purpose making default.css the single file that can be lifted
-as-is from the repository directly without the need for a build step
 
-Typically this "required" baseline CSS is added by `makestuff.js` during build.
+Visual Studio-like style based on original C# coloring by Jason Diamond <jason@diamond.name>
+
 */
-pre code.hljs {
-  display: block;
-  overflow-x: auto;
-  padding: 1em
-}
-code.hljs {
-  padding: 3px 5px
-}
-/* end baseline CSS */
 .hljs {
-  background: #F3F3F3;
-  color: #444
+  background: white;
+  color: black
 }
-/* Base color: saturation 0; */
-.hljs-subst {
-  /* default */
-  
-}
-/* purposely ignored */
-.hljs-formula,
-.hljs-attr,
-.hljs-property,
-.hljs-params {
-  
-}
-.hljs-comment {
-  color: #697070
-}
-.hljs-tag,
-.hljs-punctuation {
-  color: #444a
-}
-.hljs-tag .hljs-name,
-.hljs-tag .hljs-attr {
-  color: #444
+.hljs-comment,
+.hljs-quote,
+.hljs-variable {
+  color: #008000
 }
 .hljs-keyword,
-.hljs-attribute,
 .hljs-selector-tag,
-.hljs-meta .hljs-keyword,
-.hljs-doctag,
-.hljs-name {
-  font-weight: bold
-}
-/* User color: hue: 0 */
-.hljs-type,
-.hljs-string,
-.hljs-number,
-.hljs-selector-id,
-.hljs-selector-class,
-.hljs-quote,
-.hljs-template-tag,
-.hljs-deletion {
-  color: #880000
-}
-.hljs-title,
-.hljs-section {
-  color: #880000;
-  font-weight: bold
-}
-.hljs-regexp,
-.hljs-symbol,
-.hljs-variable,
-.hljs-template-variable,
-.hljs-link,
-.hljs-selector-attr,
-.hljs-operator,
-.hljs-selector-pseudo {
-  color: #ab5656
-}
-/* Language color: hue: 90; */
-.hljs-literal {
-  color: #695
-}
 .hljs-built_in,
-.hljs-bullet,
-.hljs-code,
+.hljs-name,
+.hljs-tag {
+  color: #00f
+}
+.hljs-string,
+.hljs-title,
+.hljs-section,
+.hljs-attribute,
+.hljs-literal,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-type,
 .hljs-addition {
-  color: #397300
+  color: #a31515
 }
-/* Meta color: hue: 200 */
+.hljs-deletion,
+.hljs-selector-attr,
+.hljs-selector-pseudo,
 .hljs-meta {
-  color: #1f7199
+  color: #2b91af
 }
-.hljs-meta .hljs-string {
-  color: #38a
+.hljs-doctag {
+  color: #808080
 }
-/* Misc effects */
+.hljs-attr {
+  color: #f00
+}
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link {
+  color: #00b0e8
+}
 .hljs-emphasis {
   font-style: italic
 }
@@ -530,99 +476,70 @@ pre code.hljs {
 code.hljs {
   padding: 3px 5px
 }
-/*!
-  Theme: StackOverflow Dark
-  Description: Dark theme as used on stackoverflow.com
-  Author: stackoverflow.com
-  Maintainer: @Hirse
-  Website: https://github.com/StackExchange/Stacks
-  License: MIT
-  Updated: 2021-05-15
-
-  Updated for @stackoverflow/stacks v0.64.0
-  Code Blocks: /blob/v0.64.0/lib/css/components/_stacks-code-blocks.less
-  Colors: /blob/v0.64.0/lib/css/exports/_stacks-constants-colors.less
-*/
+/*
+ * Visual Studio 2015 dark style
+ * Author: Nicolas LLOBERA <nllobera@gmail.com>
+ */
 .hljs {
-  /* var(--highlight-color) */
-  color: #ffffff;
-  /* var(--highlight-bg) */
-  background: #1c1b1b
-}
-.hljs-subst {
-  /* var(--highlight-color) */
-  color: #ffffff
-}
-.hljs-comment {
-  /* var(--highlight-comment) */
-  color: #999999
+  background: #1E1E1E;
+  color: #DCDCDC
 }
 .hljs-keyword,
-.hljs-selector-tag,
-.hljs-meta .hljs-keyword,
-.hljs-doctag,
-.hljs-section {
-  /* var(--highlight-keyword) */
-  color: #88aece
-}
-.hljs-attr {
-  /* var(--highlight-attribute); */
-  color: #88aece
-}
-.hljs-attribute {
-  /* var(--highlight-symbol) */
-  color: #c59bc1
-}
-.hljs-name,
-.hljs-type,
-.hljs-number,
-.hljs-selector-id,
-.hljs-quote,
-.hljs-template-tag {
-  /* var(--highlight-namespace) */
-  color: #f08d49
-}
-.hljs-selector-class {
-  /* var(--highlight-keyword) */
-  color: #88aece
-}
-.hljs-string,
-.hljs-regexp,
+.hljs-literal,
 .hljs-symbol,
-.hljs-variable,
-.hljs-template-variable,
-.hljs-link,
-.hljs-selector-attr {
-  /* var(--highlight-variable) */
-  color: #b5bd68
+.hljs-name {
+  color: #569CD6
 }
-.hljs-meta,
-.hljs-selector-pseudo {
-  /* var(--highlight-keyword) */
-  color: #88aece
+.hljs-link {
+  color: #569CD6;
+  text-decoration: underline
 }
 .hljs-built_in,
-.hljs-title,
-.hljs-literal {
-  /* var(--highlight-literal) */
-  color: #f08d49
+.hljs-type {
+  color: #4EC9B0
 }
-.hljs-bullet,
-.hljs-code {
-  /* var(--highlight-punctuation) */
-  color: #cccccc
+.hljs-number,
+.hljs-class {
+  color: #B8D7A3
 }
+.hljs-string,
 .hljs-meta .hljs-string {
-  /* var(--highlight-variable) */
-  color: #b5bd68
+  color: #D69D85
 }
-.hljs-deletion {
-  /* var(--highlight-deletion) */
-  color: #de7176
+.hljs-regexp,
+.hljs-template-tag {
+  color: #9A5334
 }
-.hljs-addition {
-  /* var(--highlight-addition) */
-  color: #76c490
+.hljs-subst,
+.hljs-function,
+.hljs-title,
+.hljs-params,
+.hljs-formula {
+  color: #DCDCDC
+}
+.hljs-comment,
+.hljs-quote {
+  color: #57A64A;
+  font-style: italic
+}
+.hljs-doctag {
+  color: #608B4E
+}
+.hljs-meta,
+.hljs-meta .hljs-keyword,
+.hljs-tag {
+  color: #9B9B9B
+}
+.hljs-variable,
+.hljs-template-variable {
+  color: #BD63C5
+}
+.hljs-attr,
+.hljs-attribute {
+  color: #9CDCFE
+}
+.hljs-section {
+  color: gold
 }
 .hljs-emphasis {
   font-style: italic
@@ -630,15 +547,85 @@ code.hljs {
 .hljs-strong {
   font-weight: bold
 }
-.hljs-formula,
-.hljs-operator,
-.hljs-params,
-.hljs-property,
-.hljs-punctuation,
-.hljs-tag {
-  /* purposely ignored */
-  
+/*.hljs-code {
+  font-family:'Monospace';
+}*/
+.hljs-bullet,
+.hljs-selector-tag,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: #D7BA7D
 }
+.hljs-addition {
+  background-color: #144212;
+  display: inline-block;
+  width: 100%
+}
+.hljs-deletion {
+  background-color: #600;
+  display: inline-block;
+  width: 100%
+}
+}
+.highlight:hover .copy-btn,
+.code-container:hover .copy-btn {
+  opacity: 1;
+}
+.code-container {
+  position: relative;
+}
+.code-lang {
+  font-size: 40px;
+  line-height: 1;
+  opacity: 0.1;
+  pointer-events: none;
+  position: absolute;
+  right: 5px;
+}
+.copy-btn {
+  color: #333;
+  cursor: pointer;
+  line-height: 1.6;
+  opacity: 0;
+  padding: 2px 6px;
+  position: absolute;
+  transition: opacity 0.2s ease-in-out;
+  background-color: #eee;
+  background-image: linear-gradient(#fcfcfc, #eee);
+  border: 1px solid #d5d5d5;
+  border-radius: 3px;
+  font-size: 0.8125em;
+  right: 4px;
+  top: 8px;
+}
+.expand-btn {
+  bottom: 0;
+  color: var(--highlight-foreground);
+  cursor: pointer;
+  display: none;
+  left: 0;
+  right: 0;
+  position: absolute;
+  text-align: center;
+}
+.fold-cover {
+  background-image: linear-gradient(to top, var(--highlight-background) 0, rgba(0,0,0,0) 100%);
+  bottom: 0;
+  display: none;
+  height: 50px;
+  left: 0;
+  right: 0;
+  position: absolute;
+}
+.highlight-fold {
+  max-height: 500px;
+  overflow-y: hidden !important;
+}
+.highlight-fold .expand-btn,
+.highlight-fold .fold-cover {
+  display: block;
 }
 code,
 kbd,
@@ -1380,7 +1367,7 @@ pre code {
   vertical-align: middle;
 }
 .links-of-author a::before {
-  background: #ffc1ff;
+  background: #67176b;
   display: inline-block;
   margin-right: 3px;
   transform: translateY(-2px);
