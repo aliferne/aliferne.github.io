@@ -592,13 +592,11 @@ code.hljs {
   padding: 2px 6px;
   position: absolute;
   transition: opacity 0.2s ease-in-out;
-  background-color: #eee;
-  background-image: linear-gradient(#fcfcfc, #eee);
-  border: 1px solid #d5d5d5;
-  border-radius: 3px;
+  background: #fff;
+  border: 0;
   font-size: 0.8125em;
-  right: 4px;
-  top: 8px;
+  right: 0;
+  top: 0;
 }
 .expand-btn {
   bottom: 0;
@@ -1367,7 +1365,7 @@ pre code {
   vertical-align: middle;
 }
 .links-of-author a::before {
-  background: #67176b;
+  background: #479eff;
   display: inline-block;
   margin-right: 3px;
   transform: translateY(-2px);
@@ -1830,6 +1828,16 @@ pre code {
 }
 .back-to-top.back-to-top-on {
   bottom: 30px;
+}
+.reading-progress-bar {
+  --progress: 0;
+  background: #37c6c0;
+  height: 3px;
+  position: fixed;
+  z-index: 50;
+  width: var(--progress);
+  left: 0;
+  top: 0;
 }
 .rtl.post-body p,
 .rtl.post-body a,
@@ -2321,6 +2329,18 @@ pre code {
 .post-reward div span {
   display: block;
 }
+.post-reward div span {
+  transform-origin: center bottom;
+}
+.post-reward div:hover span {
+  animation: next-bounce 1.4s infinite ease-in-out;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .post-reward div:hover span {
+    animation: none;
+  }
+}
 .post-reward img {
   display: inline-block;
   margin: 0.8em 2em 0;
@@ -2346,6 +2366,56 @@ pre code {
   84% {
     transform: translateY(0) scale(1);
   }
+}
+.followme {
+  color: #bbb;
+  padding: 1em 1.5em;
+  text-align: center;
+  background: var(--card-bg-color);
+  border-left: 3px solid #ff2a2a;
+  margin: 1em 0 0;
+}
+.followme .social-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.followme .social-list .social-item {
+  margin: 0.5em 2em;
+  position: relative;
+}
+@media (max-width: 991px) {
+  .followme .social-list .social-item {
+    margin: 0.5em 0.75em;
+  }
+}
+.followme .social-list .social-link {
+  border: 0;
+  display: block;
+}
+.followme .social-list .social-link .icon {
+  font-size: 1.75em;
+}
+.followme .social-list .social-link .label {
+  display: block;
+  font-size: 14px;
+}
+.followme .social-list .social-link:hover + .social-item-img {
+  display: block;
+}
+.followme .social-list span.social-link {
+  color: var(--link-color);
+}
+.followme .social-list span.social-link:hover {
+  color: var(--link-hover-color);
+}
+.followme .social-list .social-item-img {
+  display: none;
+  left: 50%;
+  max-width: 180px;
+  position: absolute;
+  transform: translate(-50%, 20px);
+  z-index: 1;
 }
 .category-all-page .category-all-title {
   text-align: center;
