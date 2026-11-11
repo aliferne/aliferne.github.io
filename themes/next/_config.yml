@@ -276,11 +276,11 @@ tag_icon: false
 # Front-matter variable (nonsupport animation).
 reward_settings:
   # If true, a donate button will be displayed in every article by default.
-  enable: false
-  animation: false
+  enable: true
+  animation: true
 
 reward:
-  #wechatpay: /images/wechatpay.png
+  wechatpay: /images/wechatpay.jpg
   #alipay: /images/alipay.png
   #paypal: /images/paypal.png
   #bitcoin: /images/bitcoin.png
@@ -290,7 +290,7 @@ reward:
 follow_me:
   #Twitter: https://twitter.com/username || fab fa-twitter
   #Telegram: https://t.me/channel_name || fab fa-telegram
-  #WeChat: /images/wechat_channel.png || fab fa-weixin
+  WeChat: /images/wechat_channel.jpg || fab fa-weixin
   #RSS: /atom.xml || fa fa-rss
 
 # Related popular posts
@@ -319,7 +319,7 @@ post_navigation: left
 
 # TagCloud settings for tags page.
 tagcloud:
-  min: 12 # Minimum font size in px
+  min: 15 # Minimum font size in px
   max: 30 # Maximum font size in px
   amount: 200 # Total amount of tags
   orderby: name # Order of tags
@@ -380,13 +380,13 @@ codeblock:
   copy_button:
     enable: true
     # Available values: default | flat | mac
-    style: default
+    style: flat
   # Fold code block
   fold:
     enable: true
     height: 500
   # Display language name
-  language: true
+  language: false
 
 back2top:
   enable: true
@@ -397,7 +397,7 @@ back2top:
 
 # Reading progress bar
 reading_progress:
-  enable: false
+  enable: true
   # Available values: left | right
   start_at: left
   # Available values: top | bottom
@@ -418,7 +418,7 @@ bookmark:
 # `Follow me on GitHub` banner in the top-right corner.
 github_banner:
   enable: false
-  permalink: https://github.com/yourname
+  permalink: https://github.com/aliferne
 
 
 # ---------------------------------------------------------------
