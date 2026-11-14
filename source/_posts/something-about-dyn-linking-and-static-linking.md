@@ -43,7 +43,7 @@ cc main.c static.c -o sta_main
 [main.c] url: https://www.baidu.com/ opened
 ```
 
-此时链接程序会将两个文件链接在一起，没有动态链接符号(.dymsym)，符号表里面是：
+此时链接程序会将两个文件链接在一起，动态链接符号表里面没有 `OpenURL`，符号表里面是：
 
 ```bash
 > readelf --syms sta_main | grep OpenURL # 查看符号表
