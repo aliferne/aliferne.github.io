@@ -15,14 +15,17 @@ tags:
 - CSAPP 第七章
 - 程序员的自我修养：链接、装载与库
 
+<!-- more -->
+
 # 实验代码
 
 先简单看看实验代码，本次会用到的实验代码如下：
 
 - [main.c][main.c]: 主文件
-- [add.c][add.c]: 定义了 `add` 函数（动态链接）
+- [add.c][add.c]: 定义了 `add_int` 函数（动态链接）
 - [dyn.c][dyn.c]: 要变成动态链接库的文件
 - [static.c][static.c]: 要静态链接的文件
+- [Makefile][Makefile]
 
 本次实验依赖 `raylib`
 
