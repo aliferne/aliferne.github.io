@@ -28,7 +28,7 @@
 <meta property="og:description" content="简介主要是想要搞清 gcc 链接的一些东西，文章偏实验性质，不太会解释太多东西，想要了解具体理论的话推荐如下两本书：  CSAPP 第七章 程序员的自我修养：链接、装载与库">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-04-23T04:00:00.000Z">
-<meta property="article:modified_time" content="2026-11-14T15:56:58.289Z">
+<meta property="article:modified_time" content="2026-11-14T16:03:23.384Z">
 <meta property="article:author" content="Ferne">
 <meta property="article:tag" content="c">
 <meta property="article:tag" content="链接">
@@ -303,7 +303,7 @@
 <h1 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h1><h2 id="一、静态链接"><a href="#一、静态链接" class="headerlink" title="一、静态链接"></a>一、静态链接</h2><p>运行 <code>make static</code>:</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt; make static</span><br><span class="line">cc main.c static.c -o sta_main </span><br><span class="line">------------------------ sta_main ------------------------</span><br><span class="line">[static.c] (test_call_static) called</span><br><span class="line">[main.c] url: https://www.baidu.com/ opened</span><br></pre></td></tr></table></figure>
 
-<p>此时链接程序会将两个文件链接在一起，没有动态链接符号(.dymsym)，符号表里面是：</p>
+<p>此时链接程序会将两个文件链接在一起，动态链接符号表里面没有 <code>OpenURL</code>，符号表里面是：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt; readelf --syms sta_main | grep OpenURL <span class="comment"># 查看符号表</span></span><br><span class="line">    25: 0000000000001149    52 FUNC    GLOBAL DEFAULT   14 OpenURL <span class="comment"># 表示是全局的函数</span></span><br><span class="line"></span><br><span class="line">&gt; readelf --dym-syms sta_main | grep OpenURL <span class="comment"># 查看动态链接的符号表</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
 
 <p>也就是说此时对 <code>OpenURL</code> 的引用来自于两个程序静态链接之后共同形成的符号是默认的符号表，只要在源代码中正确声明其他源文件的函数，就可以调用</p>
