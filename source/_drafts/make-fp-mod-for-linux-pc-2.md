@@ -30,11 +30,13 @@ PAM 应用程序指定对应的 service --> 应用程序发起 `auth` 请求 -->
 PAM 配置文件有一定的语法规则，由于配置文件的相关资料很多，这里只对需要用到的做简要说明。
 
 基本语法规则： `<type> <flag> <path> <args>`
-比如这个例子： `auth required xxx.so`，就表示 authentication （用户身份验证） 要求使用 `xxx.so` 这个模块， `xxx.so` 需要实现一些 PAM 模块要求的函数，然后通过返回 `PAM_*` 状态码告知是验证通过还是失败。
+比如这个例子： `auth required xxx.so`，就表示 authentication （用户身份验证） 要求使用 `xxx.so` 这个模块， `xxx.so` 需要实现一些 PAM 模块要求的函数，然后通过返回 `PAM_*` 状态码告知是验证通过还是失败
 
-我们会用到的只有 `auth`, `required` 和 `sufficient`. `auth` 就是鉴权用的，验证你是不是对应的用户，
-`required` 和另一个叫 `requisite` 的很像， `required`
-表示调用所有需要的模块，即使有模块失败了也先不管，等整体调用完了再返回失败，而另一个则是一失败就立马返回，`sufficient` 表示只要验证通过就直接返回成功，并且自动忽略前面模块的 fail。
+我们会用到的只有 `auth`, `required` 和 `sufficient`：
+
+- `auth` 就是鉴权用的，验证你是不是对应的用户
+- `required` 和另一个叫 `requisite` 的很像， `required` 表示调用所有需要的模块，即使有模块失败了也先不管，等整体调用完了再返回失败， 而另一个则是一失败就立马返回
+- `sufficient` 表示只要验证通过就直接返回成功，并且自动忽略前面模块的 fail。
 
 由于 `sufficient` 有成功就直接返回的特性，这个其实就会有安全上的顾虑 (试想一下如果写的是 `auth sufficient pam_permit.so`， 那整个 PAM 就炸掉了)，我不是特别建议使用。
 
