@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 8.1.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/amiya-avator.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/amiya-avator.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css" integrity="sha256-4Lad8m4ZWW1Lgb9+sMVLYEfnIh7BjV1NQMEe79Pviks=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"aliferne.github.io","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.29.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"vs","dark":"vs2015"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"flat"},"fold":{"enable":true,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="本文是个人学习笔记，只适合作为参考，不适合学习 B 站视频号： BV1rwvMeTEGt 下面主要还是理论的部分，实操的话可能到时候会截图 po 在这里，但也可能只是仙人指路告诉你是视频哪里哪里。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="四层板学习记录">
+<meta property="og:url" content="http://aliferne.github.io/2025/11/12/four-layer-pcb-learning-log/index.html">
+<meta property="og:site_name" content="Ferne 的编程小屋">
+<meta property="og:description" content="本文是个人学习笔记，只适合作为参考，不适合学习 B 站视频号： BV1rwvMeTEGt 下面主要还是理论的部分，实操的话可能到时候会截图 po 在这里，但也可能只是仙人指路告诉你是视频哪里哪里。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-11-12T10:50:00.000Z">
+<meta property="article:modified_time" content="2026-11-15T08:59:43.867Z">
+<meta property="article:author" content="Ferne">
+<meta property="article:tag" content="embedded">
+<meta property="article:tag" content="hardware">
+<meta property="article:tag" content="mcu">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://aliferne.github.io/2025/11/12/four-layer-pcb-learning-log/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://aliferne.github.io/2025/11/12/four-layer-pcb-learning-log/","path":"2025/11/12/four-layer-pcb-learning-log/","title":"四层板学习记录"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>四层板学习记录 | Ferne 的编程小屋</title>
+  
+
+
+
+
+
+
+
+
+  
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Ferne 的编程小屋" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-search popup-trigger" aria-label="搜索" role="button">
+      <i class="fa fa-search fa-fw fa-lg"></i>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Ferne 的编程小屋</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Die Melodie von Null und Eins</p>
+  </div>
+
+  <div class="site-nav-toggle" aria-label="切换导航栏" role="button">
+      <i class="fa fa-ellipsis fa-fw fa-lg"></i>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/aboutme/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-layer-group fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  
+  <template id="search-popup-template"><div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div></template>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E9%9C%80%E8%A6%81%E5%9B%9B%E5%B1%82%E6%9D%BF"><span class="nav-number">1.</span> <span class="nav-text">什么时候需要四层板</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">基础知识</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B1%82%E5%8F%A0%E7%BB%93%E6%9E%84"><span class="nav-number">2.1.</span> <span class="nav-text">层叠结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%B5%E6%BA%90%E5%92%8C%E5%9C%B0%E5%B9%B3%E9%9D%A2%E9%97%AE%E9%A2%98"><span class="nav-number">2.2.</span> <span class="nav-text">电源和地平面问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PCB-%E5%B8%83%E5%B1%80%E5%8E%9F%E5%88%99"><span class="nav-number">2.3.</span> <span class="nav-text">PCB 布局原则</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%E2%80%94%E2%80%94TMC2209-LA-%E6%AD%A5%E8%BF%9B%E7%94%B5%E6%9C%BA%E9%A9%B1%E5%8A%A8%E6%9D%BF"><span class="nav-number">3.</span> <span class="nav-text">实战——TMC2209-LA 步进电机驱动板</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ferne"
+      src="/images/amiya-avator.jpg">
+  <p class="site-author-name" itemprop="name">Ferne</p>
+  <div class="site-description" itemprop="description">娱乐编程、生活日志、各种闲谈</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/aliferne" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;aliferne" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:a3230269751@163.com" title="E-Mail → mailto:a3230269751@163.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh_cn" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://aliferne.github.io/2025/11/12/four-layer-pcb-learning-log/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/amiya-avator.jpg">
+      <meta itemprop="name" content="Ferne">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ferne 的编程小屋">
+      <meta itemprop="description" content="娱乐编程、生活日志、各种闲谈">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="四层板学习记录 | Ferne 的编程小屋">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          四层板学习记录
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2025-11-12 18:50:00" itemprop="dateCreated datePublished" datetime="2025-11-12T18:50:00+08:00">2025-11-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-lines"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>1.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>本文是个人学习笔记，只适合作为参考，不适合学习</p>
+<p>B 站视频号： BV1rwvMeTEGt</p>
+<p>下面主要还是理论的部分，实操的话可能到时候会截图 po 在这里，但也可能只是仙人指路告诉你是视频哪里哪里。</p>
+<span id="more"></span>
+
+<h1 id="什么时候需要四层板"><a href="#什么时候需要四层板" class="headerlink" title="什么时候需要四层板"></a>什么时候需要四层板</h1><ul>
+<li>需要做阻抗匹配</li>
+<li>画不下</li>
+<li>对信号和电源要求苛刻</li>
+</ul>
+<p>什么是阻抗匹配：大白话讲</p>
+<p>信号就好像车，信号线就好像公路，如果公路一开始很宽，后面特别窄而车特别快，那么一百辆车最后过去的可能也就几辆</p>
+<p>这就是阻抗不匹配，高速信号损失特别多。</p>
+<p>信号做阻抗匹配时需要完整的地平面，如果地平面不完整，阻抗匹配会比较难做。</p>
+<p>两层板不好做阻抗匹配，要把信号线做得很粗（ 几十 mil ），四层板就可以做的比较细</p>
+<p>有些板子，比如无刷电机，对阻抗匹配、信号和电源几乎没要求，但就是要做得很小（ 对尺寸有要求 ），此时画不下，也得用四层板</p>
+<p>对电源和信号要求严格 &#x3D;&#x3D;&gt;<br>双层板画电源时、有的时候要打过孔然后绕到底层去布线，或者说拐个弯走线，这样子实际上不利于电源完整性，地平面会被切割来切割去的，如果对电源和信号有要求，那就要上四层板了</p>
+<h1 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h1><h2 id="层叠结构"><a href="#层叠结构" class="headerlink" title="层叠结构"></a>层叠结构</h2><p>四层板，就是四个层的板子：</p>
+<p>（高速）信号层 -&gt; GND 层 -&gt; 电源层 -&gt; （低速）信号层</p>
+<p>（ Markdown 有点难表示立体效果，将就看吧 ）</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">  +----------+</span><br><span class="line"> /  Signal  /</span><br><span class="line">+----------+</span><br><span class="line">  +----------+</span><br><span class="line"> /   GND    /</span><br><span class="line">+----------+</span><br><span class="line">  +----------+</span><br><span class="line"> /   PWR    /</span><br><span class="line">+----------+</span><br><span class="line">  +----------+</span><br><span class="line"> /  Signal  /</span><br><span class="line">+----------+</span><br></pre></td></tr></table></figure>
+
+<p>我们之前提到信号做阻抗匹配需要完整地平面，因此距地平面近的就可以做高速信号，很方便地去做阻抗匹配。</p>
+<p>而一般两层板则是两层不严格分离，既是电源又是地，同时也是信号。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">  +----------+</span><br><span class="line"> /   G / S  /   ( Top )</span><br><span class="line">+----------+</span><br><span class="line">  +----------+</span><br><span class="line"> /   G / S  /   ( Bottom )</span><br><span class="line">+----------+</span><br></pre></td></tr></table></figure>
+
+<p>这也就导致了如果元器件布局十分密集，那么信号线可能就要到处打过孔，因此在比较严苛的场景下可能会导致信号传输质量的问题，而如果有多层（ 四层 ），那么会非常方便 —— 我只要把电源直接打穿孔打到供电引脚就行了，可以省下很多空间在信号层给信号线布线。（ 视频有画图解释，这里受限于表述方法只能文字 ）</p>
+<h2 id="电源和地平面问题"><a href="#电源和地平面问题" class="headerlink" title="电源和地平面问题"></a>电源和地平面问题</h2><p>原本是直接画电源线，地线，然后打比较粗的过孔</p>
+<p>现在直接对着要供电的区域，设置一下网络然后铺铜，接下来把 PWR 层打个比较粗一点的过孔穿上来。</p>
+<p>地平面的完整性，二层板部分信号线要割裂地平面，导致信号和电源回流路径增大，所以在信号线周围打一堆过孔，让信号 &#x2F; 电源 沿着最近的过孔回流回去。</p>
+<p>四层板不会割裂地平面，就不太需要关心这个问题，也不用说打一堆为了减小回流路径的过孔。</p>
+<h2 id="PCB-布局原则"><a href="#PCB-布局原则" class="headerlink" title="PCB 布局原则"></a>PCB 布局原则</h2><ol>
+<li>模块化</li>
+<li>整洁</li>
+<li>就近</li>
+</ol>
+<h1 id="实战——TMC2209-LA-步进电机驱动板"><a href="#实战——TMC2209-LA-步进电机驱动板" class="headerlink" title="实战——TMC2209-LA 步进电机驱动板"></a>实战——TMC2209-LA 步进电机驱动板</h1><hr>
+<p>原理图部分</p>
+<p>一些十分基础的知识，比如滤波电容，小电容过滤高频信号，大电容过滤低频信号等……</p>
+<p>没什么好记笔记的。</p>
+<hr>
+<p>PCB 部分</p>
+<p>复习：</p>
+<ol>
+<li>布局 -&gt; 就近原则</li>
+<li>添加层叠 </li>
+<li>布线；电源；GND</li>
+<li>铺铜与 DRC</li>
+</ol>
+<p>感觉最好看下视频？我这写的话还是比较麻烦的，或者直接网上找下文档啥的参考一下</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>请我一杯咖啡吧！</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.jpg" alt="Ferne 微信">
+        <span>微信</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Ferne
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://aliferne.github.io/2025/11/12/four-layer-pcb-learning-log/" title="四层板学习记录">http://aliferne.github.io/2025/11/12/four-layer-pcb-learning-log/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh_cn" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/wechat_channel.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/embedded/" rel="tag"># embedded</a>
+              <a href="/tags/mcu/" rel="tag"># mcu</a>
+              <a href="/tags/hardware/" rel="tag"># hardware</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/07/22/wch-board-and-vscode-eide-dev-env-build/" rel="prev" title="【WCH】在沁恒微电子申请的板卡初体验及Vscode+EIDE环境的搭建方案">
+                  <i class="fa fa-angle-left"></i> 【WCH】在沁恒微电子申请的板卡初体验及Vscode+EIDE环境的搭建方案
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2026/02/09/how-to-config-nvidia-gpu-on-eos/" rel="next" title="EndeavourOS 上英伟达显卡配置流程">
+                  EndeavourOS 上英伟达显卡配置流程 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Ferne</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">121k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:50</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/mist/" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

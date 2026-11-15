@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 8.1.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/amiya-avator.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/amiya-avator.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css" integrity="sha256-4Lad8m4ZWW1Lgb9+sMVLYEfnIh7BjV1NQMEe79Pviks=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"aliferne.github.io","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.29.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"vs","dark":"vs2015"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"flat"},"fold":{"enable":true,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="零、前言这篇文章是我记录学习STM32的USART串口通信的文章。 至于为什么会想写环形队列？实际上是因为我在几个月前玩51单片机的时候就发现过一个问题——UART老是丢包：  于是当时就在想有没有什么方法可以不丢包了，然后在找博客的过程当中偶然了解到了环形队列，不过当时我连最基本的双端链表都还写不出来，所以也就没细看。 现在学STM32后再回来看USART，就当是填坑了吧。顺带这里其实也可以扩展">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【STM32】当环形队列遇上串口通信">
+<meta property="og:url" content="http://aliferne.github.io/2025/07/11/stm32-circular-queue-encountered-serial-communication/index.html">
+<meta property="og:site_name" content="Ferne 的编程小屋">
+<meta property="og:description" content="零、前言这篇文章是我记录学习STM32的USART串口通信的文章。 至于为什么会想写环形队列？实际上是因为我在几个月前玩51单片机的时候就发现过一个问题——UART老是丢包：  于是当时就在想有没有什么方法可以不丢包了，然后在找博客的过程当中偶然了解到了环形队列，不过当时我连最基本的双端链表都还写不出来，所以也就没细看。 现在学STM32后再回来看USART，就当是填坑了吧。顺带这里其实也可以扩展">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://aliferne.github.io/images/stm32-circular-queue-encountered-serial-communication/01.png">
+<meta property="og:image" content="http://aliferne.github.io/images/stm32-circular-queue-encountered-serial-communication/02.png">
+<meta property="og:image" content="http://aliferne.github.io/images/stm32-circular-queue-encountered-serial-communication/03.png">
+<meta property="og:image" content="http://aliferne.github.io/images/stm32-circular-queue-encountered-serial-communication/04.png">
+<meta property="og:image" content="http://aliferne.github.io/images/stm32-circular-queue-encountered-serial-communication/05.png">
+<meta property="og:image" content="http://aliferne.github.io/images/stm32-circular-queue-encountered-serial-communication/06.png">
+<meta property="og:image" content="http://aliferne.github.io/images/stm32-circular-queue-encountered-serial-communication/07.png">
+<meta property="og:image" content="http://aliferne.github.io/images/stm32-circular-queue-encountered-serial-communication/08.png">
+<meta property="og:image" content="http://aliferne.github.io/images/stm32-circular-queue-encountered-serial-communication/09.png">
+<meta property="article:published_time" content="2025-07-11T12:50:00.000Z">
+<meta property="article:modified_time" content="2026-11-15T08:57:46.441Z">
+<meta property="article:author" content="Ferne">
+<meta property="article:tag" content="c">
+<meta property="article:tag" content="data structure">
+<meta property="article:tag" content="embedded">
+<meta property="article:tag" content="mcu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://aliferne.github.io/images/stm32-circular-queue-encountered-serial-communication/01.png">
+
+
+<link rel="canonical" href="http://aliferne.github.io/2025/07/11/stm32-circular-queue-encountered-serial-communication/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://aliferne.github.io/2025/07/11/stm32-circular-queue-encountered-serial-communication/","path":"2025/07/11/stm32-circular-queue-encountered-serial-communication/","title":"【STM32】当环形队列遇上串口通信"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>【STM32】当环形队列遇上串口通信 | Ferne 的编程小屋</title>
+  
+
+
+
+
+
+
+
+
+  
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Ferne 的编程小屋" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-search popup-trigger" aria-label="搜索" role="button">
+      <i class="fa fa-search fa-fw fa-lg"></i>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Ferne 的编程小屋</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Die Melodie von Null und Eins</p>
+  </div>
+
+  <div class="site-nav-toggle" aria-label="切换导航栏" role="button">
+      <i class="fa fa-ellipsis fa-fw fa-lg"></i>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/aboutme/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-layer-group fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  
+  <template id="search-popup-template"><div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div></template>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9B%B6%E3%80%81%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">零、前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81USART%E5%9F%BA%E7%A1%80%E5%92%8CSTM32%E4%B8%8A%E7%9A%84USART"><span class="nav-number">2.</span> <span class="nav-text">一、USART基础和STM32上的USART</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-1-USART%E5%9F%BA%E7%A1%80"><span class="nav-number">2.1.</span> <span class="nav-text">1.1 USART基础</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1-2-STM32%E4%B8%8A%E7%9A%84USART"><span class="nav-number">2.2.</span> <span class="nav-text">1.2 STM32上的USART</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81USART%E4%B9%8B%E7%BC%93%E5%86%B2%E5%8C%BA%E5%AD%98%E5%82%A8"><span class="nav-number">3.</span> <span class="nav-text">二、USART之缓冲区存储</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-1-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E7%BC%93%E5%86%B2%E5%8C%BA"><span class="nav-number">3.1.</span> <span class="nav-text">2.1 为什么需要缓冲区</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-2-%E7%BA%BF%E6%80%A7%E7%BC%93%E5%86%B2%E5%8C%BA%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.2.</span> <span class="nav-text">2.2 线性缓冲区的实现</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97"><span class="nav-number">4.</span> <span class="nav-text">三、环形队列</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-1-%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97%E5%9F%BA%E7%A1%80"><span class="nav-number">4.1.</span> <span class="nav-text">3.1 环形队列基础</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-2-%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97%E5%AE%9E%E7%8E%B0"><span class="nav-number">4.2.</span> <span class="nav-text">3.2 环形队列实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-1-%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97%E7%BB%93%E6%9E%84%E4%BD%93"><span class="nav-number">4.2.1.</span> <span class="nav-text">3.2.1 环形队列结构体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-2-%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97%E5%88%9D%E5%A7%8B%E5%8C%96%E6%93%8D%E4%BD%9C"><span class="nav-number">4.2.2.</span> <span class="nav-text">3.2.2 环形队列初始化操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-3-%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97%E5%88%A4%E7%A9%BA%E5%88%A4%E6%BB%A1%E6%93%8D%E4%BD%9C"><span class="nav-number">4.2.3.</span> <span class="nav-text">3.2.3 环形队列判空判满操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-4-%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97%E5%85%A5%E9%98%9F%E5%87%BA%E9%98%9F%E6%93%8D%E4%BD%9C"><span class="nav-number">4.2.4.</span> <span class="nav-text">3.2.4 环形队列入队出队操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-5-%E5%85%B6%E4%BB%96%E6%93%8D%E4%BD%9C"><span class="nav-number">4.2.5.</span> <span class="nav-text">3.2.5 其他操作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-3-%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97%E6%B5%8B%E8%AF%95"><span class="nav-number">4.3.</span> <span class="nav-text">3.3 环形队列测试</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%8E%AF%E5%BD%A2%E9%98%9F%E5%88%97-USART"><span class="nav-number">5.</span> <span class="nav-text">四、环形队列+USART</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">五、总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ferne"
+      src="/images/amiya-avator.jpg">
+  <p class="site-author-name" itemprop="name">Ferne</p>
+  <div class="site-description" itemprop="description">娱乐编程、生活日志、各种闲谈</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/aliferne" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;aliferne" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:a3230269751@163.com" title="E-Mail → mailto:a3230269751@163.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh_cn" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://aliferne.github.io/2025/07/11/stm32-circular-queue-encountered-serial-communication/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/amiya-avator.jpg">
+      <meta itemprop="name" content="Ferne">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ferne 的编程小屋">
+      <meta itemprop="description" content="娱乐编程、生活日志、各种闲谈">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="【STM32】当环形队列遇上串口通信 | Ferne 的编程小屋">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【STM32】当环形队列遇上串口通信
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2025-07-11 20:50:00" itemprop="dateCreated datePublished" datetime="2025-07-11T20:50:00+08:00">2025-07-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-lines"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>12k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>11 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="零、前言"><a href="#零、前言" class="headerlink" title="零、前言"></a>零、前言</h1><p>这篇文章是我记录学习STM32的USART串口通信的文章。</p>
+<p>至于为什么会想写环形队列？实际上是因为我在几个月前玩51单片机的时候就发现过一个问题——UART老是丢包：</p>
+<p><img src="/images/stm32-circular-queue-encountered-serial-communication/01.png" alt="1"></p>
+<p>于是当时就在想有没有什么方法可以不丢包了，然后在找博客的过程当中偶然了解到了环形队列，不过当时我连最基本的双端链表都还写不出来，所以也就没细看。</p>
+<p>现在学STM32后再回来看USART，就当是填坑了吧。顺带这里其实也可以扩展出生产-消费模型之类的东西，也可以顺带学学。</p>
+<p>其实环形队列可以用在一切需要缓存的地方。</p>
+<p>参考文章：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/huameixiao/p/17968052">在 STM32 中使用环形队列的方式接收串口数据</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_48711800/article/details/118962516">数据结构(10)—队列之环形队列</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_42417071/article/details/142689022">【解决方案】关于 UART 接收数据时丢失数据的解决办法——环形缓冲存储区</a></li>
+</ul>
+<span id="more"></span>
+
+<h1 id="一、USART基础和STM32上的USART"><a href="#一、USART基础和STM32上的USART" class="headerlink" title="一、USART基础和STM32上的USART"></a>一、USART基础和STM32上的USART</h1><h2 id="1-1-USART基础"><a href="#1-1-USART基础" class="headerlink" title="1.1 USART基础"></a>1.1 USART基础</h2><p>USART全称Universal Synchronous&#x2F;Asynchronous Receiver&#x2F;Transmitter，即通用同步&#x2F;异步收发器。它是一种串行通信协议，用于在微控制器和其他设备之间传输数据。</p>
+<p>USART本身相当简单，一根VCC，一根RXD，一根TXD，一根GND，就可以实现全双工通信。</p>
+<p>TXD：Trasmit Data，发送数据引脚，也可以叫做TX RXD：Receive Data，接收数据引脚，也可以叫做RX</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">+----------+            +----------+</span><br><span class="line">| device 1 |            | device 2 |</span><br><span class="line">|      VCC |------------| VCC      |</span><br><span class="line">|      TXD |------------| RXD      |</span><br><span class="line">|      RXD |------------| TXD      |</span><br><span class="line">|      GND |------------| GND      |</span><br><span class="line">+----------+            +----------+</span><br></pre></td></tr></table></figure>
+
+<p>UART的通信方式是异步的，即发送方和接收方不需要同步时钟信号。通信双方只需要约定好波特率、数据位、停止位和校验位等参数即可。</p>
+<p>• 波特率：每秒钟传输的比特数。<br>• 数据位：每个数据包中包含的数据位数。<br>• 停止位：每个数据包中包含的停止位数。<br>• 校验位：用于检测数据传输过程中是否出现错误的位；分为奇校验（1的总和为奇数）和偶校验（1的总和为偶数）</p>
+<p>更多详细的内容还请自行查阅博客，这并非USART基础文章，重点不在这里</p>
+<h2 id="1-2-STM32上的USART"><a href="#1-2-STM32上的USART" class="headerlink" title="1.2 STM32上的USART"></a>1.2 STM32上的USART</h2><p>STM32F103C8T6（我手上的这块芯片）提供了3个USART接口，但我们只会用到其中的USART1（端口为PA9: USART1_TX, PA10: USART1_RX）。</p>
+<p>配置USART的步骤如下：</p>
+<p>1.使能USART1的时钟和GPIOA的时钟2.配置USART1的引脚（PA9和PA10），TXD为复用推挽输出（输出走外设接口、而非输出数据寄存器），RXD为上拉输入3.配置USART1相关参数4.配置USART1的中断5.使能USART1</p>
+<p>代码表述为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;stm32f10x.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">USART1_Init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/* 使能RCC  */</span></span><br><span class="line">    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA, ENABLE);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 配置USART1的引脚 */</span></span><br><span class="line">    GPIO_InitTypeDef GPIO_InitStructure;</span><br><span class="line">    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;</span><br><span class="line">    <span class="comment">/* 复用推挽 */</span></span><br><span class="line">    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;</span><br><span class="line">    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;</span><br><span class="line">    GPIO_Init(GPIOA, &amp;GPIO_InitStructure);</span><br><span class="line"></span><br><span class="line">    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;</span><br><span class="line">    <span class="comment">/* 上拉输入 */</span></span><br><span class="line">    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;</span><br><span class="line">    GPIO_Init(GPIOA, &amp;GPIO_InitStructure);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 配置USART1相关参数 */</span></span><br><span class="line">    USART_InitTypeDef USART_InitStructure;</span><br><span class="line">    <span class="comment">/* 9600的波特率 */</span></span><br><span class="line">    USART_InitStructure.USART_BaudRate = <span class="number">9600</span>;</span><br><span class="line">    <span class="comment">/* 8位数据位 */</span></span><br><span class="line">    USART_InitStructure.USART_WordLength = USART_WordLength_8b;</span><br><span class="line">    <span class="comment">/* 停止位长度为1 */</span></span><br><span class="line">    USART_InitStructure.USART_StopBits = USART_StopBits_1;</span><br><span class="line">    <span class="comment">/* 不使用校验位 */</span></span><br><span class="line">    USART_InitStructure.USART_Parity = USART_Parity_No;</span><br><span class="line">    <span class="comment">/* 不使用流控 */</span></span><br><span class="line">    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;</span><br><span class="line">    <span class="comment">/* 同时配置输出和输入 */</span></span><br><span class="line">    USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;</span><br><span class="line">    USART_Init(USART1, &amp;USART_InitStructure);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 配置USART1的中断，我们只要接收中断，这篇文章就是针对USART接收的问题的 */</span></span><br><span class="line">    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);</span><br><span class="line"></span><br><span class="line">    NVIC_InitTypeDef NVIC_InitStructure;</span><br><span class="line">    NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;</span><br><span class="line">    <span class="comment">/* 优先级随便设置的，但是不要设置太高，因为下面还有优先级更高的中断操作 */</span></span><br><span class="line">    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = <span class="number">2</span>;</span><br><span class="line">    NVIC_InitStructure.NVIC_IRQChannelSubPriority = <span class="number">2</span>;</span><br><span class="line">    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;</span><br><span class="line">    NVIC_Init(&amp;NVIC_InitStructure);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 使能USART1 */</span></span><br><span class="line">    USART_Cmd(USART1, ENABLE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们要考虑一下接收数据，然后发送回去：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 发送字节</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">Serial_SendByte</span><span class="params">(<span class="type">uint8_t</span> byte)</span></span><br><span class="line">&#123;</span><br><span class="line">    USART_SendData(USART1, byte);</span><br><span class="line">    <span class="comment">/* 等待发送完成，由于数据手册中提及TXE再在数据发送完之后会手动清零，所以不需要清零 */</span></span><br><span class="line">    <span class="keyword">while</span> (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 发送数组</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">Serial_SendArray</span><span class="params">(<span class="type">uint8_t</span> arr[], <span class="type">uint32_t</span> length)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">uint32_t</span> i = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; length; i++) &#123;</span><br><span class="line">        Serial_SendByte(arr[i]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 发送字符串</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">Serial_SendString</span><span class="params">(<span class="type">uint8_t</span> *str)</span></span><br><span class="line">&#123;</span><br><span class="line">   <span class="comment">// 用for循环也行，一样的</span></span><br><span class="line">    <span class="keyword">while</span> (*str++) &#123; <span class="comment">// 字符串最后有一个 \0，while识别到这个就会退出</span></span><br><span class="line">        Serial_SendByte(*str);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 用于串口的幂函数，返回 x ^ y</span></span><br><span class="line"><span class="type">uint32_t</span> <span class="title function_">Serial_Pow</span><span class="params">(<span class="type">uint32_t</span> x, <span class="type">uint32_t</span> y)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">uint32_t</span> result = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span> (y--) &#123;</span><br><span class="line">        result *= x;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// num是数字，length是数字长度</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">Serial_SendNumber</span><span class="params">(<span class="type">uint32_t</span> num, <span class="type">uint8_t</span> length)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">uint8_t</span> i = <span class="number">0</span>; i &lt; length; i++) &#123;</span><br><span class="line">        <span class="comment">// + &#x27;0&#x27; 可以转对应的 ASCII 码</span></span><br><span class="line">        <span class="comment">// 注意 length - i -1</span></span><br><span class="line">        Serial_SendByte(num / Serial_Pow(<span class="number">10</span>, length - i - <span class="number">1</span>) % <span class="number">10</span> + <span class="string">&#x27;0&#x27;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接下来我们要写一下中断函数，刚开始的demo将会十分的简单：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">USART1_IRQHandler</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/* 判断是否是接收中断 */</span></span><br><span class="line">    <span class="keyword">if</span> (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">/* 读取接收到的数据 */</span></span><br><span class="line">        <span class="type">uint8_t</span> data = USART_ReceiveData(USART1);</span><br><span class="line">        <span class="comment">/* 发送回去 */</span></span><br><span class="line">        Serial_SendByte(data);</span><br><span class="line">        <span class="comment">/* 清除中断标志位 */</span></span><br><span class="line">        USART_ClearITPendingBit(USART1, USART_IT_RXNE);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后我们让MCU发送给上位机</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// @brief 延时函数，因为行数比较少就用了内联</span></span><br><span class="line"><span class="type">void</span> <span class="keyword">inline</span> <span class="title function_">delay</span><span class="params">(<span class="type">uint32_t</span> x)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">while</span> (x--);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    USART1_Init();</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        Serial_SendString(<span class="string">&quot;Hello World!\r\n&quot;</span>);</span><br><span class="line">        delay(<span class="number">1000000</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/stm32-circular-queue-encountered-serial-communication/02.png" alt="2"></p>
+<p>可以看到这个时候就存在数据丢失了，这种情况下由于发送的数据相对简单，我们完全可以用一个很骚的解决方案：</p>
+<p><code>Serial_SendString(&quot;aHello World!\r\n&quot;);</code> 。</p>
+<p>你不是首字节丢失吗？那我就给你个没卵用的信息，你丢呗！反正我又不需要让上位机接收这个信息。</p>
+<p><img src="/images/stm32-circular-queue-encountered-serial-communication/03.png" alt="3"></p>
+<h1 id="二、USART之缓冲区存储"><a href="#二、USART之缓冲区存储" class="headerlink" title="二、USART之缓冲区存储"></a>二、USART之缓冲区存储</h1><h2 id="2-1-为什么需要缓冲区"><a href="#2-1-为什么需要缓冲区" class="headerlink" title="2.1 为什么需要缓冲区"></a>2.1 为什么需要缓冲区</h2><p>上面的解决方案看起来貌似还不错，那为什么需要环形队列？看起来这种骚方案完全能解决问题啊！</p>
+<p>实际上，单片机并非只执行简单的转发工作，它还可能有其他任务，比如说处理定时中断，解析串口数据并执行对应操作，等等，如果说我们只是简单的收发，那么假设某个时间段，不巧有个比串口中断优先级更高的中断发生了，然后 MCU 停下了转发工作，转而去处理那个中断，那么就会导致数据丢失的问题，因此我们需要缓冲区。</p>
+<p>当然，口说无凭，我们来配个定时中断看看，这里定了 1s 的时间：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">TIM2_Init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE); <span class="comment">// 使能定时器2时钟</span></span><br><span class="line">    <span class="comment">// 选择内部时钟</span></span><br><span class="line">    TIM_InternalClockConfig(TIM2);</span><br><span class="line">    <span class="comment">// 配置时基单元</span></span><br><span class="line">    TIM_TimeBaseInitTypeDef TIM_TIMBaseInitStructure;</span><br><span class="line">    <span class="comment">// 指定时钟分频</span></span><br><span class="line">    TIM_TIMBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1; <span class="comment">// 不分频</span></span><br><span class="line">    <span class="comment">// 选择计数模式</span></span><br><span class="line">    TIM_TIMBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up; <span class="comment">// 向上计数</span></span><br><span class="line">    <span class="comment">// 选择自动重装器的值（ARR）</span></span><br><span class="line">    TIM_TIMBaseInitStructure.TIM_Period = <span class="number">10000</span> - <span class="number">1</span>;</span><br><span class="line">    <span class="comment">// 选择计数器预分频值（PSC）</span></span><br><span class="line">    TIM_TIMBaseInitStructure.TIM_Prescaler = <span class="number">7200</span> - <span class="number">1</span>;</span><br><span class="line">    <span class="comment">// 选择重复计数器（在多个周期之后才输出中断信号，这里不需要）</span></span><br><span class="line">    TIM_TIMBaseInitStructure.TIM_RepetitionCounter = <span class="number">0</span>;</span><br><span class="line">    TIM_TimeBaseInit(TIM2, &amp;TIM_TIMBaseInitStructure);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 配置中断</span></span><br><span class="line">    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);</span><br><span class="line">    <span class="comment">// 使能NVIC</span></span><br><span class="line">    NVIC_InitTypeDef NVIC_InitStructure;</span><br><span class="line">    NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;</span><br><span class="line">    <span class="comment">/* 这里的优先级需要高于串口收发中断 */</span></span><br><span class="line">    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = <span class="number">1</span>;</span><br><span class="line">    NVIC_InitStructure.NVIC_IRQChannelSubPriority        = <span class="number">1</span>;</span><br><span class="line">    NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;</span><br><span class="line">    NVIC_Init(&amp;NVIC_InitStructure);</span><br><span class="line">    <span class="comment">// 使能定时器</span></span><br><span class="line">    TIM_Cmd(TIM2, ENABLE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">TIM2_IRQHandler</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) &#123;</span><br><span class="line">        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);</span><br><span class="line">        <span class="comment">/* 我们就执行一个等待操作 */</span></span><br><span class="line">        delay(<span class="number">100000</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/stm32-circular-queue-encountered-serial-communication/04.png" alt="4"></p>
+<p>因此我们需要引入缓冲区，先存储串口数据，然后再发送</p>
+<h2 id="2-2-线性缓冲区的实现"><a href="#2-2-线性缓冲区的实现" class="headerlink" title="2.2 线性缓冲区的实现"></a>2.2 线性缓冲区的实现</h2><p>代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 定义缓冲数组和长度 */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> SIZE 16</span></span><br><span class="line"><span class="type">uint8_t</span> arr[SIZE];</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 中断标志位，这里加volatile是为了防止被编译器优化 */</span></span><br><span class="line"><span class="keyword">volatile</span> <span class="type">uint8_t</span> RxFlag = <span class="number">0</span>;</span><br><span class="line"><span class="type">uint8_t</span> cnt    = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    TIM2_Init();</span><br><span class="line">    USART1_Init();</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (RxFlag) &#123;</span><br><span class="line">            RxFlag = <span class="number">0</span>; <span class="comment">// 清除中断标志位</span></span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; cnt; i++) &#123;</span><br><span class="line">                Serial_SendByte(arr[i]);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">/* 清空缓冲区 */</span></span><br><span class="line">            <span class="built_in">memset</span>(arr, <span class="number">0</span>, SIZE);</span><br><span class="line">            cnt = <span class="number">0</span>;    <span class="comment">// 计数归0</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">USART1_IRQHandler</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/* 判断是否是接收中断 */</span></span><br><span class="line">    <span class="keyword">if</span> (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) &#123;</span><br><span class="line">        <span class="comment">/* 读取接收到的数据 */</span></span><br><span class="line">        <span class="keyword">if</span> (cnt &lt; SIZE) &#123;</span><br><span class="line">            arr[cnt++] = USART_ReceiveData(USART1);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            cnt = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">/* 清除中断标志位 */</span></span><br><span class="line">        USART_ClearITPendingBit(USART1, USART_IT_RXNE);</span><br><span class="line">        RxFlag = <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>不过此时依然会存在数据丢失的问题，只要通信数据量一大，频率一快，该错位还是错位</p>
+<p>下面这张图的数据丢失发生在第四行蓝字处，丢失了ab两个字母</p>
+<p><img src="/images/stm32-circular-queue-encountered-serial-communication/05.png" alt="5"></p>
+<p>备注：以上实验均为50ms周期的频率下发送的结果，实际发送频率不太可能这么快，这里只是压测而已。</p>
+<p>因此接下来我们来讲讲环形队列，但在此之前需要先理解环形队列</p>
+<h1 id="三、环形队列"><a href="#三、环形队列" class="headerlink" title="三、环形队列"></a>三、环形队列</h1><h2 id="3-1-环形队列基础"><a href="#3-1-环形队列基础" class="headerlink" title="3.1 环形队列基础"></a>3.1 环形队列基础</h2><p>环形队列是一种数据结构，本质上来说它是一个数组，但是在逻辑层面上它是首尾相连的</p>
+<p><img src="/images/stm32-circular-queue-encountered-serial-communication/06.png" alt="6"></p>
+<p>环形队列的特点如下：</p>
+<p>1.队列长度创建后固定，首尾相接，形成环状2.队列在队首出队，队尾入队3.环形队列逻辑上为环形，物理上为定长数组</p>
+<p>所以环形队列为空时，队首和队尾就是相同的，而环形队列满了的时候，队尾 + 1之后逻辑上就应该回到队首，从而队尾 + 1 与长度取模会得到0，也就是队首。</p>
+<p>第二个特征可以看出，实际上环形队列是FIFO的。</p>
+<p>由于环形队列的物理特征为定长数组，数组可不会头尾相接，所以必然有一个操作可以让队尾在满足一个条件之后索引到队首去，也就是绕了个大圈绕回来了。</p>
+<h2 id="3-2-环形队列实现"><a href="#3-2-环形队列实现" class="headerlink" title="3.2 环形队列实现"></a>3.2 环形队列实现</h2><p>我们来明确一下实现环形队列的需求是什么：</p>
+<p>1.首先，我们需要初始化一个定长数组2.其次，我们要能通过队首出队；队尾入队3.最后，我们需要判断队列为空和队列已满的情况</p>
+<p>总结一下，需要明确四个变量：队首索引、队尾索引、队列长度、队列数组。配这东西最方便的方式就是结构体：</p>
+<h3 id="3-2-1-环形队列结构体"><a href="#3-2-1-环形队列结构体" class="headerlink" title="3.2.1 环形队列结构体"></a>3.2.1 环形队列结构体</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="type">int</span> *data;  <span class="comment">// 数据指针</span></span><br><span class="line">    <span class="type">int</span> front;  <span class="comment">// 队首位置</span></span><br><span class="line">    <span class="type">int</span> rear;   <span class="comment">// 队尾位置</span></span><br><span class="line">    <span class="type">int</span> length; <span class="comment">// 队列长度</span></span><br><span class="line">&#125; CircularQueue;</span><br></pre></td></tr></table></figure>
+
+<p>我们来玩个骚一点的操作，毕竟如果我们想要移植这段代码的话，等会一个个改类型实在是麻烦，我们直接拿宏一换多：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> CQ_DATA_TYPE int</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    CQ_DATA_TYPE *data;  <span class="comment">// 数据指针</span></span><br><span class="line">    <span class="type">int</span> front;  <span class="comment">// 队首位置</span></span><br><span class="line">    <span class="type">int</span> rear;   <span class="comment">// 队尾位置</span></span><br><span class="line">    <span class="type">int</span> length; <span class="comment">// 队列长度</span></span><br><span class="line">&#125; CircularQueue;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-2-环形队列初始化操作"><a href="#3-2-2-环形队列初始化操作" class="headerlink" title="3.2.2 环形队列初始化操作"></a>3.2.2 环形队列初始化操作</h3><p>然后是初始化函数，我们需要申请内存空间，很自然就会想到malloc对吧，所以#include &lt;stdlib.h&gt;</p>
+<p>那么malloc的函数声明是这样的：void <em>malloc(size_t &#x2F;</em> size *&#x2F;);</p>
+<p>void类型的指针，我们等会还要强转，然后还要再多写个sizeof算类型大小，好麻烦哦！</p>
+<p>没关系！上宏函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// @brief 动态申请指定类型和数量的地址空间</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> MALLOC_KxTYPE(type, k) ((type *)malloc(sizeof(type) * (k)))</span></span><br></pre></td></tr></table></figure>
+
+<p>然后我们直接这样初始化：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 创建一个指定长度的环形队列</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @note 队列的长度为length + 1，初始情况下，队首和队尾都指向0</span></span><br><span class="line"><span class="comment"> * @note 我觉得很有必要说明一下为什么length + 1</span></span><br><span class="line"><span class="comment"> * @note 让我们考虑这么一种情况，假设我给data的初始化要求是4个int</span></span><br><span class="line"><span class="comment"> * @note 接下来我将 1 2 3 4 送进队列里面</span></span><br><span class="line"><span class="comment"> * @note 由于循环队列从队尾开始进队，刚开始的时候，队尾和队首重合，我们又没有+1</span></span><br><span class="line"><span class="comment"> * @note 所以整个数组总的长度为4</span></span><br><span class="line"><span class="comment"> * @note 此时1进入队列，现在就是 front(1), rear的情况（可见rear此时自己占据了一格）</span></span><br><span class="line"><span class="comment"> * @note 然后2进入队列，现在是 front(1), 2, rear</span></span><br><span class="line"><span class="comment"> * @note 到3，front(1), 2, 3, rear</span></span><br><span class="line"><span class="comment"> * @note 到4，front(1), 2, 3, 4, rear</span></span><br><span class="line"><span class="comment"> * @note 可是不对啊！数组长度只有4，按照循环队列的设计，此时rear已经和front重叠了</span></span><br><span class="line"><span class="comment"> * @note 而enque是不允许覆盖的（enque内部使用的判断队列满的逻辑为`((queue-&gt;rear + 1) % (queue-&gt;length) == (queue-&gt;front))`）</span></span><br><span class="line"><span class="comment"> * @note 所以实际进入队列的数据只有 front(1), 2, 3，rear自己会占用一格</span></span><br><span class="line"><span class="comment"> * @note 所以如果不malloc length + 1的话，那实际得到的数组长度只能是 length - 1，+1就是为了补上这个洞的</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">CircularQueue *<span class="title function_">createCircularQueue</span><span class="params">(<span class="type">int</span> length)</span></span><br><span class="line">&#123;</span><br><span class="line">    CircularQueue *<span class="built_in">queue</span> = MALLOC_KxTYPE(CircularQueue, <span class="number">1</span>);</span><br><span class="line">    <span class="comment">/* 注意这里需要 + 1，我们得预留好空位给rear */</span></span><br><span class="line">    <span class="comment">/* 避免到时候绕了个圈之后意外发生越界 */</span></span><br><span class="line">    <span class="comment">/* 同时也能保证完全利用完申请的内存 */</span></span><br><span class="line">    <span class="built_in">queue</span>-&gt;data  = MALLOC_KxTYPE(CQ_DATA_TYPE, length + <span class="number">1</span>);</span><br><span class="line">    <span class="built_in">queue</span>-&gt;front = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">queue</span>-&gt;rear  = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">/* 长度其实也应该 + 1，只有这样子才能访问完整个分配的内存区域 */</span></span><br><span class="line">    <span class="comment">/* 从而front -&gt; rear总共length+1个单位，但是只有length个单位是能存储的 */</span></span><br><span class="line">    <span class="built_in">queue</span>-&gt;length = length + <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">queue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意这里不能用内联函数哈，内联函数要类型检查的，你很难把类型作为参数传进去。</p>
+<h3 id="3-2-3-环形队列判空判满操作"><a href="#3-2-3-环形队列判空判满操作" class="headerlink" title="3.2.3 环形队列判空判满操作"></a>3.2.3 环形队列判空判满操作</h3><p>超级简单，一开始（第三章开头）我们就把逻辑说好了，这里需要先实现判空判满，因为入队和出队要用到。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 判断环形队列是否为空</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @note 当队首和队尾相等时，表示队列为空</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">bool</span> <span class="title function_">isCircularQueueEmpty</span><span class="params">(<span class="type">const</span> CircularQueue *<span class="built_in">queue</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> (<span class="built_in">queue</span>-&gt;front == <span class="built_in">queue</span>-&gt;rear);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 判断环形队列是否已满</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @note 当队尾的下一个位置为队首时，表示队列已满</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">bool</span> <span class="title function_">isCircularQueueFull</span><span class="params">(<span class="type">const</span> CircularQueue *<span class="built_in">queue</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> ((<span class="built_in">queue</span>-&gt;rear + <span class="number">1</span>) % (<span class="built_in">queue</span>-&gt;length) == (<span class="built_in">queue</span>-&gt;front));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-4-环形队列入队出队操作"><a href="#3-2-4-环形队列入队出队操作" class="headerlink" title="3.2.4 环形队列入队出队操作"></a>3.2.4 环形队列入队出队操作</h3><p>入队的操作还是相当简单的，逻辑就是，首先我们要判断队列是否满了，满了就不可以加了，然后我们再通过队尾加入元素，最后我们判断一下有没有正好到队列长度，如果是的话，我们就让队尾绕回来。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 向环形队列中入队一个元素</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @note 如果队列已满，则返回false</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">bool</span> <span class="title function_">enCircularQueue</span><span class="params">(CircularQueue *<span class="built_in">queue</span>, <span class="type">int</span> value)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (isCircularQueueFull(<span class="built_in">queue</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">queue</span>-&gt;data[<span class="built_in">queue</span>-&gt;rear] = value;</span><br><span class="line">    <span class="comment">// if (queue-&gt;rear == queue-&gt;length) &#123;</span></span><br><span class="line">    <span class="comment">//     queue-&gt;rear = 0;</span></span><br><span class="line">    <span class="comment">// &#125;</span></span><br><span class="line">    <span class="comment">/* 可以简化为取模运算 */</span></span><br><span class="line">    <span class="built_in">queue</span>-&gt;rear = (<span class="built_in">queue</span>-&gt;rear + <span class="number">1</span>) % <span class="built_in">queue</span>-&gt;length;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后是出队操作，出队操作稍微复杂一点，因为我们需要返回出队的元素，所以需要传入一个指针，然后我们再判断一下队列是否为空，空了就不可以减了，然后我们通过队首取出元素，最后我们判断一下有没有正好到队列长度，如果是的话，我们就让队首绕回来。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * @brief 从环形队列中出队一个元素</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @note 如果队列为空，则返回false</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">bool</span> <span class="title function_">deCircularQueue</span><span class="params">(CircularQueue *<span class="built_in">queue</span>, CQ_DATA_TYPE *value)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (isCircularQueueEmpty(<span class="built_in">queue</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    *value = <span class="built_in">queue</span>-&gt;data[<span class="built_in">queue</span>-&gt;front];</span><br><span class="line">    <span class="comment">// if (queue-&gt;front == queue-&gt;length) &#123;</span></span><br><span class="line">    <span class="comment">//     queue-&gt;front = 0;</span></span><br><span class="line">    <span class="comment">// &#125;</span></span><br><span class="line">    <span class="comment">/* 可以简化为取模运算 */</span></span><br><span class="line">    <span class="built_in">queue</span>-&gt;front = (<span class="built_in">queue</span>-&gt;front + <span class="number">1</span>) % <span class="built_in">queue</span>-&gt;length;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>理论上来说其实出队操作可以直接返回值，不需要传指针，但问题在于enqueue和dequeue此时就会存在接口不统一的问题，这倒是其次，最主要的是如果队列为空，你要返回什么值表示出队失败呢？要知道C语言并没有异常控制流，你只能通过返回值来表示错误。所以这里的设计保证了接口统一和错误处理的正常执行。</p>
+<h3 id="3-2-5-其他操作"><a href="#3-2-5-其他操作" class="headerlink" title="3.2.5 其他操作"></a>3.2.5 其他操作</h3><p>剩下看你打算怎么搞，环形队列的主要功能到这里其实就结束了，你也可以写一些函数来索引队首和队尾元素，或者返回结构体的一些值，这些不是重点，所以不放在这里。</p>
+<h2 id="3-3-环形队列测试"><a href="#3-3-环形队列测试" class="headerlink" title="3.3 环形队列测试"></a>3.3 环形队列测试</h2><p>测试环境为 Ubuntu 24.04.2 LTS，使用的编译器为 GCC，内存检查工具为 Valgrind，用于检查循环队列的实现是否存在内存泄漏。</p>
+<p>这种情况是只 <code>malloc</code> 了 <code>length</code> 个字节的情况:</p>
+<p><img src="/images/stm32-circular-queue-encountered-serial-communication/07.png" alt="7"></p>
+<p>这种情况是 <code>malloc</code> 了 <code>length + 1</code> 个字节的情况:</p>
+<p><img src="/images/stm32-circular-queue-encountered-serial-communication/08.png" alt="8"></p>
+<p>当然结果是没有内存泄漏啊，我懒得把调试信息全搞下来了。</p>
+<h1 id="四、环形队列-USART"><a href="#四、环形队列-USART" class="headerlink" title="四、环形队列+USART"></a>四、环形队列+USART</h1><p>代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 中断标志位，这里加volatile是为了防止被编译器优化 */</span></span><br><span class="line"><span class="keyword">volatile</span> <span class="type">uint8_t</span> RxFlag = <span class="number">0</span>;</span><br><span class="line">CircularQueue *RxQueue; <span class="comment">// 环形队列</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">uint8_t</span> data = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    TIM2_Init();</span><br><span class="line">    USART1_Init();</span><br><span class="line">    RxQueue = createCircularQueue(SIZE);</span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (RxFlag) &#123;</span><br><span class="line">            RxFlag = <span class="number">0</span>; <span class="comment">// 清除中断标志位</span></span><br><span class="line">            <span class="keyword">while</span> (!isCircularQueueEmpty(RxQueue)) &#123;</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="comment">/* 数据出队列 */</span></span><br><span class="line">                    deCircularQueue(RxQueue, &amp;data);</span><br><span class="line">                    Serial_SendByte(data);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">USART1_IRQHandler</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/* 判断是否是接收中断 */</span></span><br><span class="line">    <span class="keyword">if</span> (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) &#123;</span><br><span class="line">        <span class="comment">/* 读取接收到的数据 */</span></span><br><span class="line">        <span class="keyword">if</span> (!isCircularQueueFull(RxQueue)) &#123;</span><br><span class="line">            enCircularQueue(RxQueue, USART_ReceiveData(USART1));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">/* 清除中断标志位 */</span></span><br><span class="line">        USART_ClearITPendingBit(USART1, USART_IT_RXNE);</span><br><span class="line">        RxFlag = <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/stm32-circular-queue-encountered-serial-communication/09.png" alt="9"></p>
+<p>备注：以上实验均为50ms周期的频率下发送的结果，实际发送频率不太可能这么快，这里只是压测而已。</p>
+<h1 id="五、总结"><a href="#五、总结" class="headerlink" title="五、总结"></a>五、总结</h1><p>简单来说，环形队列实际上就是利用数组实现了缓存，但这种缓存相较于：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">if (cnt &lt; SIZE) &#123;</span><br><span class="line">    arr[cnt++] = USART_ReceiveData(USART1);</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    cnt = 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>的无脑覆盖来说，更加地平稳，它要求你队列满了之后必须先出队，不然不准再往里面加新东西，从而避免了数据的覆盖。</p>
+<p>当然，环形队列在极端的压测情况下依然可能存在数据丢失（我上面的实验上了50ms，没怎么丢包，相对于线性缓冲区来说表现十分优异，但在10ms的频率下会存在几个字母的丢包），不过它依然够用且好用，它的实现相对来说比较简单，只要你曾经搓出过链表，那么你离环形队列其实只有一步之遥。所以我推荐在需要数据较稳定的情况下使用环形队列。</p>
+<p>本来计划是打算顺着环形队列顺带讲讲生产-消费模型和消息队列的，但是现在字数已经快六千了，就不往下写了</p>
+<hr>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>请我一杯咖啡吧！</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.jpg" alt="Ferne 微信">
+        <span>微信</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Ferne
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://aliferne.github.io/2025/07/11/stm32-circular-queue-encountered-serial-communication/" title="【STM32】当环形队列遇上串口通信">http://aliferne.github.io/2025/07/11/stm32-circular-queue-encountered-serial-communication/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh_cn" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/wechat_channel.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/embedded/" rel="tag"># embedded</a>
+              <a href="/tags/mcu/" rel="tag"># mcu</a>
+              <a href="/tags/c/" rel="tag"># c</a>
+              <a href="/tags/data-structure/" rel="tag"># data structure</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/04/23/something-about-dyn-linking-and-static-linking/" rel="prev" title="动态链接与静态链接二三事">
+                  <i class="fa fa-angle-left"></i> 动态链接与静态链接二三事
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2025/07/22/wch-board-and-vscode-eide-dev-env-build/" rel="next" title="【WCH】在沁恒微电子申请的板卡初体验及Vscode+EIDE环境的搭建方案">
+                  【WCH】在沁恒微电子申请的板卡初体验及Vscode+EIDE环境的搭建方案 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Ferne</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">121k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:50</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/mist/" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

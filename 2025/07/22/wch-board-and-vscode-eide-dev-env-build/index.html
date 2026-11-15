@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 8.1.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/amiya-avator.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/amiya-avator.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css" integrity="sha256-4Lad8m4ZWW1Lgb9+sMVLYEfnIh7BjV1NQMEe79Pviks=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"aliferne.github.io","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.29.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"vs","dark":"vs2015"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":true,"style":"flat"},"fold":{"enable":true,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.json","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="零、前言这个暑假在B站UP主Expert电子实验室那里偶然了解到WCH（沁恒微电子）有免费的板卡样品申请活动，只需要自己付运费就行，抱着试一试的心态，我就去申请了，然后前几天到货之后开发了几个简单的程序体验了一下，不过当时使用的是人家基于Vscode改的MounRiver Studio，然后通过邮件方式和人家反应了一些问题，以及询问是否有配置Vscode的方案（官方的MRS砍掉了Vscode的插件">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【WCH】在沁恒微电子申请的板卡初体验及Vscode+EIDE环境的搭建方案">
+<meta property="og:url" content="http://aliferne.github.io/2025/07/22/wch-board-and-vscode-eide-dev-env-build/index.html">
+<meta property="og:site_name" content="Ferne 的编程小屋">
+<meta property="og:description" content="零、前言这个暑假在B站UP主Expert电子实验室那里偶然了解到WCH（沁恒微电子）有免费的板卡样品申请活动，只需要自己付运费就行，抱着试一试的心态，我就去申请了，然后前几天到货之后开发了几个简单的程序体验了一下，不过当时使用的是人家基于Vscode改的MounRiver Studio，然后通过邮件方式和人家反应了一些问题，以及询问是否有配置Vscode的方案（官方的MRS砍掉了Vscode的插件">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://aliferne.github.io/images/wch-board-and-vscode-eide-dev-env-build/01.jpg">
+<meta property="og:image" content="http://aliferne.github.io/images/wch-board-and-vscode-eide-dev-env-build/02.jpg">
+<meta property="og:image" content="http://aliferne.github.io/images/wch-board-and-vscode-eide-dev-env-build/03.png">
+<meta property="og:image" content="http://aliferne.github.io/images/wch-board-and-vscode-eide-dev-env-build/04.png">
+<meta property="article:published_time" content="2025-07-22T05:58:00.000Z">
+<meta property="article:modified_time" content="2026-11-15T09:06:47.167Z">
+<meta property="article:author" content="Ferne">
+<meta property="article:tag" content="c">
+<meta property="article:tag" content="eide">
+<meta property="article:tag" content="embedded">
+<meta property="article:tag" content="mcu">
+<meta property="article:tag" content="vscode">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://aliferne.github.io/images/wch-board-and-vscode-eide-dev-env-build/01.jpg">
+
+
+<link rel="canonical" href="http://aliferne.github.io/2025/07/22/wch-board-and-vscode-eide-dev-env-build/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://aliferne.github.io/2025/07/22/wch-board-and-vscode-eide-dev-env-build/","path":"2025/07/22/wch-board-and-vscode-eide-dev-env-build/","title":"【WCH】在沁恒微电子申请的板卡初体验及Vscode+EIDE环境的搭建方案"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>【WCH】在沁恒微电子申请的板卡初体验及Vscode+EIDE环境的搭建方案 | Ferne 的编程小屋</title>
+  
+
+
+
+
+
+
+
+
+  
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.5.0/search.js" integrity="sha256-xFC6PJ82SL9b3WkGjFavNiA9gm5z6UBxWPiu4CYjptg=" crossorigin="anonymous" defer></script>
+<script src="/js/third-party/search/local-search.js" defer></script>
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+<link rel="alternate" href="/atom.xml" title="Ferne 的编程小屋" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-search popup-trigger" aria-label="搜索" role="button">
+      <i class="fa fa-search fa-fw fa-lg"></i>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Ferne 的编程小屋</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Die Melodie von Null und Eins</p>
+  </div>
+
+  <div class="site-nav-toggle" aria-label="切换导航栏" role="button">
+      <i class="fa fa-ellipsis fa-fw fa-lg"></i>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-about"><a href="/aboutme/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-layer-group fa-fw"></i>分类</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  
+  <template id="search-popup-template"><div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div></template>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9B%B6%E3%80%81%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">零、前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="nav-number">2.</span> <span class="nav-text">一、前置知识</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E9%85%8D%E7%BD%AE%E8%BF%87%E7%A8%8B"><span class="nav-number">3.</span> <span class="nav-text">二、配置过程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%9E%84%E5%BB%BA%E6%97%B6%E7%9A%84%E4%B8%80%E4%BA%9B%E5%B0%8F%E9%97%AE%E9%A2%98"><span class="nav-number">4.</span> <span class="nav-text">三、构建时的一些小问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%A8%8B%E5%BA%8F%E4%BB%A3%E7%A0%81"><span class="nav-number">5.</span> <span class="nav-text">四、程序代码</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Ferne"
+      src="/images/amiya-avator.jpg">
+  <p class="site-author-name" itemprop="name">Ferne</p>
+  <div class="site-description" itemprop="description">娱乐编程、生活日志、各种闲谈</div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/aliferne" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;aliferne" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:a3230269751@163.com" title="E-Mail → mailto:a3230269751@163.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh_cn" class="cc-opacity" rel="noopener" target="_blank"><img src="https://cdnjs.cloudflare.com/ajax/libs/creativecommons-vocabulary/2020.11.3/assets/license_badges/small/by_nc_sa.svg" alt="Creative Commons"></a>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://aliferne.github.io/2025/07/22/wch-board-and-vscode-eide-dev-env-build/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/amiya-avator.jpg">
+      <meta itemprop="name" content="Ferne">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ferne 的编程小屋">
+      <meta itemprop="description" content="娱乐编程、生活日志、各种闲谈">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="【WCH】在沁恒微电子申请的板卡初体验及Vscode+EIDE环境的搭建方案 | Ferne 的编程小屋">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          【WCH】在沁恒微电子申请的板卡初体验及Vscode+EIDE环境的搭建方案
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2025-07-22 13:58:00" itemprop="dateCreated datePublished" datetime="2025-07-22T13:58:00+08:00">2025-07-22</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-lines"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="零、前言"><a href="#零、前言" class="headerlink" title="零、前言"></a>零、前言</h1><p>这个暑假在B站UP主Expert电子实验室那里偶然了解到WCH（沁恒微电子）有免费的板卡样品申请活动，只需要自己付运费就行，抱着试一试的心态，我就去申请了，然后前几天到货之后开发了几个简单的程序体验了一下，不过当时使用的是人家基于Vscode改的MounRiver Studio，然后通过邮件方式和人家反应了一些问题，以及询问是否有配置Vscode的方案（官方的MRS砍掉了Vscode的插件功能，这点我不太喜欢），他们的工程师回复说没有，于是我打算自己踩踩坑（其实也没多少）写一篇配置教程出来。</p>
+<p>另附带一些链接：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://www.wch.cn/">沁恒微电子官网</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.wch.cn/services/request_sample.html">样品申请途径</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.wch.cn/products/CH32V203.html">CHV203相关介绍及SDK</a></li>
+</ul>
+<p>希望各位能够多多支持国产芯片，WCH的SDK和ST的标准库大差不差，如果你学过标准库，那很快就能上手。</p>
+<span id="more"></span>
+
+<h1 id="一、前置知识"><a href="#一、前置知识" class="headerlink" title="一、前置知识"></a>一、前置知识</h1><p>本篇文章基于WCH的V203C8T6评估板，配置Vscode+EIDE的开发教程</p>
+<p>WCH评估板的实物图如下，配置成功的实验现象为使用跳线连接的LED灯闪烁（接线为PA0到LED端口）</p>
+<p><img src="/images/wch-board-and-vscode-eide-dev-env-build/01.jpg" alt="1"></p>
+<p>下面是WLinkE的实物图，靠近串口的那里有两个LED灯，D1为红灯，D2为蓝灯，这个是指示当前烧录模式为RISCV还是ARM的指示灯</p>
+<p><img src="/images/wch-board-and-vscode-eide-dev-env-build/02.jpg" alt="2"></p>
+<p>下面是指示灯对应的烧录模式</p>
+<p><img src="/images/wch-board-and-vscode-eide-dev-env-build/03.png" alt="3"></p>
+<p>此外我发现WLinkE貌似默认是ARM模式，我们需要切换成RISCV模式，这个需要借助WCH-LinkUtility软件来实现。</p>
+<h1 id="二、配置过程"><a href="#二、配置过程" class="headerlink" title="二、配置过程"></a>二、配置过程</h1><p>我们可以直接去移植现有的模板，在EIDE里面对应的是移植远程模板：</p>
+<p><img src="/images/wch-board-and-vscode-eide-dev-env-build/04.png" alt="4"></p>
+<p>接下来我们需要选择裸机模板，然后输入WCH，接下来选择RISCV，找到CHV203的模板，然后新建就可以了。</p>
+<p>如果不使用MounRiver Studio（MRS）提供的RISC-V GCC也可以，但沁恒自研的青稞RISC-V貌似有一些自定义的指令，为了支持这些指令，需要选择MRS的RISC-V GCC</p>
+<p>具体方法是选择EIDE插件，然后选择设置工具链，再将RISC-V GCC配置到对应的路径即可，需要注意的是，EIDE会帮你解析目录，切换到bin文件夹去，所以你只需要：</p>
+<p>&#x2F;path&#x2F;to&#x2F;you&#x2F;RISCV GCC，而不需要&#x2F;path&#x2F;to&#x2F;you&#x2F;RISCV GCC&#x2F;bin</p>
+<p>这步由于我没找到EIDE临时配置的文件，所以上面的方法是配置全局的RISC-V GCC的，不过应该是可以开发其他的RISC-V芯片的，后面想还原回默认设置的话也很简单。</p>
+<p>我的RISC-V GCC就在 E:\MounRiverStudio_RISC-V_IDE\MounRiver_Studio2\resources\app\resources\win32\components\WCH\ToolChain 底下，此外WCH根目录下还有一些其他的工具，比如我们等会要用到的WCH-LinkUtility软件，对了，MounRiverStudio_RISC-V_IDE是我自定义的安装目录，你们自己指定安装目录的话可能不是这个</p>
+<p>OpenOCD官方不支持WLinkE，需要使用MRS的OpenOCD</p>
+<p>为了避免在EIDE中直接修改OpenOCD配置会影响其他设备的烧录，我们选择修改download.cmd为如下内容：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span> HEXFILE=%<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">set</span> &quot;HEXFILE=<span class="variable">%HEXFILE:\=/%</span>&quot;</span><br><span class="line"></span><br><span class="line"><span class="built_in">path</span>/to/your/openocd.exe -f ./tools/wch-target.cfg -c init -c halt -c &quot;flash erase_sector wch_riscv <span class="number">0</span> last &quot; -c &quot;program <span class="variable">%HEXFILE%</span>&quot; -c &quot;verify_image <span class="variable">%HEXFILE%</span>&quot; -c wlink_reset_resume -c <span class="keyword">exit</span></span><br></pre></td></tr></table></figure>
+
+<p>不过这样子会增加一些依赖（需要你对应目录下真的有这个OpenOCD才能跑），如果只是本机开发的话这样子搞没问题，多人协作的话最好还是慎重。</p>
+<p>WLinkE要切换RISC-V模式的话，需要使用WCH-LinkUtility软件，你可以通过打开MRS -&gt; 选择工具 -&gt; 选择WCH-Link本地烧录工具 -&gt; 设置当前WCHLink模式 来打开软件，也可以直接定位到人家的可执行文件的目录，我这里是：E:\MounRiverStudio_RISC-V_IDE\MounRiver_Studio2\resources\app\resources\win32\components\WCH\Others\SWDTool\default\WCH-LinkUtility.exe。</p>
+<h1 id="三、构建时的一些小问题"><a href="#三、构建时的一些小问题" class="headerlink" title="三、构建时的一些小问题"></a>三、构建时的一些小问题</h1><p>默认情况下是可以直接构建的，但是会有Warning</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">./src/main.c: <span class="keyword">In</span> function &#x27;main&#x27;:</span><br><span class="line">./src/main.c:<span class="number">59</span>:<span class="number">24</span>: warning: <span class="built_in">format</span> &#x27;%d&#x27; expects argument of <span class="built_in">type</span> &#x27;int&#x27;, but argument <span class="number">2</span> has <span class="built_in">type</span> &#x27;uint32_t&#x27; &#123;aka &#x27;long unsigned int&#x27;&#125; [-Wformat=]</span><br><span class="line">     printf(&quot;SystemClk:%d\r\n&quot;, SystemCoreClock);</span><br><span class="line">                       ~^       ~~~~~~~~~~~~~~~</span><br><span class="line">                       %ld</span><br><span class="line">./src/main.c:<span class="number">60</span>:<span class="number">24</span>: warning: <span class="built_in">format</span> &#x27;%x&#x27; expects argument of <span class="built_in">type</span> &#x27;unsigned int&#x27;, but argument <span class="number">2</span> has <span class="built_in">type</span> &#x27;uint32_t&#x27; &#123;aka &#x27;long unsigned int&#x27;&#125; [-Wformat=]</span><br><span class="line">     printf( &quot;ChipID:%<span class="number">08</span>x\r\n&quot;, DBGMCU_GetCHIPID() );</span><br><span class="line">                     ~~~^       ~~~~~~~~~~~~~~~~~~</span><br><span class="line">                     %<span class="number">08</span>lx</span><br></pre></td></tr></table></figure>
+
+<p>这个是由于Github的模板中main.c文件导致的，这个可以随便改，SystemCoreClock是uint32_t类型的，DBGMCU_GetCHIPID()的返回类型也是uint32_t，所以需要夹一个l</p>
+<p>core_riscv.h的一些问题：Github克隆下来的模板是：__asm volatile (“wfi”);，但我发现有的EVT是asm volatile (“wfi”);，如果使用这种EVT会导致报错：</p>
+<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sdk/Core/core_riscv.h: <span class="keyword">In</span> function &#x27;__WFI&#x27;:</span><br><span class="line">sdk/Core/core_riscv.h:<span class="number">291</span>:<span class="number">3</span>: error: &#x27;asm&#x27; undeclared (first use <span class="keyword">in</span> this function)</span><br><span class="line">   asm volatile (&quot;wfi&quot;);</span><br><span class="line">   ^~~</span><br></pre></td></tr></table></figure>
+
+<p>我转到__asm里面去看了，发现其实是有宏定义的：#define __asm asm，所以其实理论上来说写成asm应该也不影响，但是就是会报错，因为用旧版的core_riscv.h也没啥问题，所以这个问题可以不管。此外我发现Github的模板也不算特别老，所以可以不需要下载人家的EVT SDK再替换。</p>
+<h1 id="四、程序代码"><a href="#四、程序代码" class="headerlink" title="四、程序代码"></a>四、程序代码</h1><p>和STM32的标准库其实很像，如果你学过标准库的话基本可以无痛迁移WCH的板卡，这点可以放心。也希望大家能够支持国产芯片，助力国产芯片的发展。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/********************************** (C) COPYRIGHT *******************************</span></span><br><span class="line"><span class="comment"> * File Name          : main.c</span></span><br><span class="line"><span class="comment"> * Author             : WCH</span></span><br><span class="line"><span class="comment"> * Version            : V1.0.0</span></span><br><span class="line"><span class="comment"> * Date               : 2021/06/06</span></span><br><span class="line"><span class="comment"> * Description        : Main program body.</span></span><br><span class="line"><span class="comment"> *********************************************************************************</span></span><br><span class="line"><span class="comment"> * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.</span></span><br><span class="line"><span class="comment"> * Attention: This software (modified or not) and binary are used for</span></span><br><span class="line"><span class="comment"> * microcontroller manufactured by Nanjing Qinheng Microelectronics.</span></span><br><span class="line"><span class="comment"> *******************************************************************************/</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *@Note</span></span><br><span class="line"><span class="comment"> *GPIO routine:</span></span><br><span class="line"><span class="comment"> *PA0 push-pull output.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;debug.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Global define */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* Global Variable */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*********************************************************************</span></span><br><span class="line"><span class="comment"> * @fn      GPIO_Toggle_INIT</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @brief   Initializes GPIOA.0</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @return  none</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">GPIO_Toggle_INIT</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    GPIO_InitTypeDef GPIO_InitStructure = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line">    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);</span><br><span class="line">    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;</span><br><span class="line">    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;</span><br><span class="line">    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;</span><br><span class="line">    GPIO_Init(GPIOA, &amp;GPIO_InitStructure);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*********************************************************************</span></span><br><span class="line"><span class="comment"> * @fn      main</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @brief   Main program.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @return  none</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    u8 i = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);</span><br><span class="line">    SystemCoreClockUpdate();</span><br><span class="line">    Delay_Init();</span><br><span class="line">    USART_Printf_Init(<span class="number">115200</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;SystemClk:%ld\r\n&quot;</span>, SystemCoreClock);</span><br><span class="line">    <span class="built_in">printf</span>( <span class="string">&quot;ChipID:%08lx\r\n&quot;</span>, DBGMCU_GetCHIPID() );</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;GPIO Toggle TEST\r\n&quot;</span>);</span><br><span class="line">    GPIO_Toggle_INIT();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        Delay_Ms(<span class="number">250</span>);</span><br><span class="line">        GPIO_WriteBit(GPIOA, GPIO_Pin_0, (i == <span class="number">0</span>) ? (i = Bit_SET) : (i = Bit_RESET));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>请我一杯咖啡吧！</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/wechatpay.jpg" alt="Ferne 微信">
+        <span>微信</span>
+      </div>
+
+  </div>
+</div>
+
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Ferne
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://aliferne.github.io/2025/07/22/wch-board-and-vscode-eide-dev-env-build/" title="【WCH】在沁恒微电子申请的板卡初体验及Vscode+EIDE环境的搭建方案">http://aliferne.github.io/2025/07/22/wch-board-and-vscode-eide-dev-env-build/</a>
+  </li>
+  <li class="post-copyright-license">
+      <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh_cn" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="followme">
+  <span>欢迎关注我的其它发布渠道</span>
+
+  <div class="social-list">
+
+      <div class="social-item">
+          <span class="social-link">
+            <span class="icon">
+              <i class="fab fa-weixin"></i>
+            </span>
+
+            <span class="label">WeChat</span>
+          </span>
+
+          <img class="social-item-img" src="/images/wechat_channel.jpg">
+      </div>
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/embedded/" rel="tag"># embedded</a>
+              <a href="/tags/mcu/" rel="tag"># mcu</a>
+              <a href="/tags/c/" rel="tag"># c</a>
+              <a href="/tags/vscode/" rel="tag"># vscode</a>
+              <a href="/tags/eide/" rel="tag"># eide</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2025/07/11/stm32-circular-queue-encountered-serial-communication/" rel="prev" title="【STM32】当环形队列遇上串口通信">
+                  <i class="fa fa-angle-left"></i> 【STM32】当环形队列遇上串口通信
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2025/11/12/four-layer-pcb-learning-log/" rel="next" title="四层板学习记录">
+                  四层板学习记录 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2024 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Ferne</span>
+  </div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">121k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:50</span>
+  </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/mist/" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>
