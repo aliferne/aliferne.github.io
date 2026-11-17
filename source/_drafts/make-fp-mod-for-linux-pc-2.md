@@ -136,6 +136,7 @@ pamtester: successfully authenticated
 
 ## PAM 应用与模块的通信机制
 
+
 # 为其他认证应用打通 任督 PAM 脉
 
 ## KDE kscreenlocker
@@ -198,8 +199,7 @@ Password: ^C
 
 然后再把 `<flag>` 从 `required` 改成 `sufficient`，保存，此时如果你锁屏的话，就会发现直接就能解锁：
 
-TODO: 加入图片
-![][]
+![directly-unlocked][directly-unlocked]
 
 接下来，删除 `pam_kde_auth_test.so`，那一行，这里我会建议注释原来的 `pam_fprintd.so` 选项，改用自己自定义的 `.so` 作为指纹模块：
 TODO: 这里是否可以借鉴： `auth required pam_succeed_if.so user != root quiet_success` 的编辑思路来实现两个文件其中一个参与？
@@ -219,21 +219,30 @@ auth    required        pam_fprint_zw111.so  # 这个是我们添加的
 
 # 打通 “任督 PAM 脉”
 
-TODO: 这里似乎把设备号写的太具体了，导致换 USB 接口的话，这个规则就不生效了
-需要固定设备名称，不然很不方便，udev 规则，这里直接放博客链接，不详细写
+我们之前一直都在用 `/dev/ttyUSB1` 这样的来访问设备，然而这样子访问是很不方便的，原因在于设备名称可能发生变化，因此我们必须要以什么手段固定设备名称，在 Linux 下我们可以通过 udev 实现两个目标：
+
+1. 固定设备名称
+2. 不论设备插入哪个 USB 口，都能够以相同名称访问
+
+因此我们可以执行如下操作：
 
 ```bash
 > udevadm info -a -n /dev/ttyUSB1
 ...
 looking at device '/devices/pci0000:00/0000:00:08.1/0000:06:00.4/usb3/3-1/3-1.2/3-1.2:1.0/ttyUSB1/tty/t>
   KERNEL=="ttyUSB1"
-  # 需要注意下下面写 udev rules 时应该写 usb, 这里不知道为什么是 tty，可能是我连了扩展坞导致的
   SUBSYSTEM=="tty"
   DRIVER==""
+# 我省略了相当一部分内容，你需要自己找到 idProduct, idVendor, serial 三个属性
+# 这两个属性是实现上面两点的关键
 ...
 ```
 
-然后在 `/etc/udev/rules.d/` 创建文件 `fprint_zw111.rules` 并写入：`KERNELS=="3-1.2:1.0", SUBSYSTEMS=="usb", MODE:="0666", SYMLINK+="FP_ZW111"`
+然后在 `/etc/udev/rules.d/` 创建文件 `fprint_zw111.rules` 并写入：
+
+```
+SUBSYSTEMS=="usb", ATTRS{idProduct}=="0002", ATTRS{idVendor}=="1d6b", ATTRS{serial}=="0000:06:00.4", MODE:="0666", SYMLINK+="FP_ZW111"
+```
 
 最后再 `sudo udevadm control --reload-rules && sudo udevadm trigger` 以使得规则生效
 
@@ -246,7 +255,7 @@ looking at device '/devices/pci0000:00/0000:00:08.1/0000:06:00.4/usb3/3-1/3-1.2/
 
 此时我们完成了固定命名的操作，可以更加愉快地开发了。
 
-然后我们不再使用锁屏去测试，而是继续使用 `pamtester`：
+然后我们继续使用 `pamtester` 测试：
 
 ```bash
 > sudo pamtester -v kde-fingerprint $USER authenticate
@@ -271,8 +280,12 @@ pamtester: successfully authenticated
 
 不过后面我们依然需要锁屏测试，那么怎么看日志呢？很简单，借助 `ctrl+alt+fx` 就能打开任意 tty 界面（不过需要注意 KDE 和 SDDM 本身会占用 tty, 不要开到这两个），然后登录一下，输入 `sudo journalctl -f | grep kwin_wayland_wrapper` 并确认，此时这个 tty 界面会一直显示该服务相关内容，我们就可以对 ZW111 模块的情况进行监视了。
 
-创建定时器
-注意 `clock_gettime` 需要 gnu99，即需要定义 POSIX 标准，不能是 STRICT_ANSI 模式
+
+## 应用层面的超时机制
+
+源代码见这里： [waiter.c][waiter.c]
+
+
 
 `/lib/x86_64-linux-gnu/libexec/kscreenlocker_greet --testing`
 
@@ -382,6 +395,8 @@ pamtester: successfully authenticated
 
 ---
 
+[directly-unlocked]: /images/make-fp-mod-for-linux-pc/directly-unlocked.jpg
+
 [make-fp-mod-for-linux-pc-1]: https://aliferne.github.io/2026/11/10/make-fp-mod-for-linux-pc-1/
 [pam module config file]: https://zhuanlan.zhihu.com/p/663757925
 [libpam-wiki]: http://www.fifi.org/doc/libpam-doc/html
@@ -393,4 +408,5 @@ pamtester: successfully authenticated
 [pam_auth_test.c]: https://github.com/aliferne/fp-zw111-unlocker/blob/main/test/pam-test/pam_auth_test.c
 [test_pam.c]: https://github.com/aliferne/fp-zw111-unlocker/blob/main/test/pam-test/test_pam.c
 [pam_kde_auth_test.c]: https://github.com/aliferne/fp-zw111-unlocker/blob/main/test/pam-test/pam_kde_auth_test.c
+[waiter.c]: https://github.com/aliferne/fp-zw111-unlocker/blob/main/src/waiter.c
 
