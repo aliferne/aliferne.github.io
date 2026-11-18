@@ -18,7 +18,7 @@ tags:
 
 这个项目有点个人小玩具的色彩（笑），我的电脑是天选 5 Pro, 没有指纹识别模块，而我自己又主要用 Debian, 当时是和朋友去福州旅游，在闽都 THO 晚上的小型演唱会现场听 DJ 打碟感到无聊，然后思绪就开始发散，**想着说每次解锁电脑都要输入密码，实在是太麻烦了，因此想搞个指纹模块来玩**，于是就有了这篇博客。当然可能有人会觉得我闲得慌，也确实是闲得慌，我要是不折腾，你们看什么啊？ ~~是啊，看什么?~~
 
-注意上面的需求，因为这个需求后面给我扩展了一下，变成了接入任意 PAM 服务，也导致了一些架构上的调整，我会在第二篇文章讲述自己的 “解题思路” 和踩的一些坑，同时我也想在第二篇讲讲我自己对 AI Coding 的一些想法。
+注意上面的需求，因为这个需求后面给我扩展了一下，变成了接入任意 PAM 服务，也导致了一些架构上的调整，我会在第二篇文章讲述自己的 “解题思路” 和踩的一些坑，同时我也想在第三篇讲讲我自己对 AI 辅助的一些想法。
 
 指纹模块相关代码已经[开源][项目开源链接]， 主要逻辑部分基本完全古法编程，而审(zhao)查(cha)工作主要由 DeepSeek V4.1 Flash 负责，**这篇博客也是纯手敲**。
 
@@ -83,7 +83,7 @@ tags:
 这个函数我相信不需要过多的介绍，`pathname` 就是文件路径，而 `flags` 就是打开文件的标志位。
 我们需要用到的 `flag`: `O_RDWR`, `O_NOCTTY`, `O_NONBLOCK`(非阻塞用于实验，实际上我们需要阻塞)
 
-我们需要读写串口，因此需要使用 `O_RDWR` 打开串口文件，而由于 Linux 会将串口抽象为 tty 设备，也就意味着默认情况下，系统可能会把串口当作一个控制终端来用，因此就可能能够发送一些特殊的控制字符，比如 `^C`，由于实际我们去使用的时候并不会发送这些特殊控制字符，因此需要借助 `O_NOCTTY` 关闭这一选项。
+我们需要读写串口，因此需要使用 `O_RDWR` 打开串口文件，而由于 Linux 会将串口抽象为 tty 设备，也就意味着默认情况下，系统可能会把串口当作一个控制终端来用，因此需要借助 `O_NOCTTY` 关闭这一选项。
 
 `O_NONBLOCK` 从字面意思上来理解就是不要阻塞，即以非阻塞的形式打开文件，这个选项的作用我会放到下面讲。
 
@@ -138,9 +138,9 @@ write:        EF 01 FF FF FF FF 01 00 03 35 00 39
 1. `vtime = 0, vmin = 0`: 此时对应不阻塞，不论如何都会直接返回，一般来说都不建议这种方式
 2. `vtime > 0, vmin = 0`: 此时会等待最大 vtime 的时间，只要有数据就会返回
 3. `vtime = 0, vmin > 0`: 此时要求至少收集到 vmin 个字节后才返回，因此少于 vmin 个字节的行为是未定义的
-4. `vtime > 0, vmin > 0`: 此时要求只要拿到 vmin 个字节，或者到了 vtime 要求的时间， read 就会成功返回
+4. `vtime > 0, vmin > 0`: 此时要求只要拿到 vmin 个字节，或者到了 vtime 要求的时间， read 就会成功返回, vtime 是字节间数据的等待间隔
 
-需要注意由于 `vtime`, `vmin` 和 `O_NONBLOCK` 是矛盾的，因此如果设置 **非阻塞** 读，这两个变量就必须要是 0, 不然会导致读越界的 SegFault 问题(我没去琢磨源码，如果有知道原因的大佬还请不吝赐教)。篇幅原因我们只需要了解上面这些内容就足够了，如果想要了解更多东西，可以参考[这篇文章][vtime & vmin]
+我这里测试发现 `vtime`, `vmin` 和 `O_NONBLOCK` 是矛盾的，如果设置 **非阻塞** 读，这两个变量就必须要是 0, 不然会导致读越界的 SegFault 问题(我没去琢磨源码，如果有知道原因的大佬还请不吝赐教)。篇幅原因我们只需要了解上面这些内容就足够了，如果想要了解更多东西，可以参考[这篇文章][vtime & vmin]
 
 对于第二点，实际上我们有一个很好用的检测设备是否断连的方法，我们只需要借助 `tcgetattr` 即可，这个函数在尝试获取串口配置失败时会返回 -1, 并设置 errno 为一些特定的值，如果 `errno == EIO`，那么一般就是串口断连了。严谨一些的话可以用 `poll`，但是我没用，这里会在后面解释
 
@@ -301,7 +301,10 @@ DESCRIPTION
 - 在锁内对串口文件进行各种读写操作
 - 检验 `fd` 是否合法 -> 解锁 -> 关闭文件
 
-自此整个 Linux 串口和系统编程部分也就结束了，下一章节我们将聚焦于 PAM 模块的开发，以及与 KDE 锁屏 kscreenlocker 和 Root 验证程序 sudo 的联动，敬请期待！
+自此整个 Linux 串口和系统编程部分也就结束了，下一章节我们将聚焦于 PAM 模块的开发，以及与 KDE 锁屏 kscreenlocker 和 Root 验证程序 sudo 的联动：
+
+- [中][make-fp-mod-for-linux-pc-2]
+- [下][make-fp-mod-for-linux-pc-3]
 
 ---
 
@@ -320,4 +323,7 @@ DESCRIPTION
 
 [check errno when tcgetattr not called]: /images/make-fp-mod-for-linux-pc/check-errno-when-tcgetattr-not-called.png
 [check errno when tcgetattr called]: /images/make-fp-mod-for-linux-pc/check-errno-when-tcgetattr-called.png
+
+[make-fp-mod-for-linux-pc-2]: https://aliferne.github.io/2026/11/18/make-fp-mod-for-linux-pc-2/
+[make-fp-mod-for-linux-pc-3]: https://aliferne.github.io/2026/11/19/make-fp-mod-for-linux-pc-3/
 
