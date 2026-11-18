@@ -30,7 +30,7 @@
 <meta property="og:image" content="http://aliferne.github.io/images/make-fp-mod-for-linux-pc/check-errno-when-tcgetattr-not-called.png">
 <meta property="og:image" content="http://aliferne.github.io/images/make-fp-mod-for-linux-pc/check-errno-when-tcgetattr-called.png">
 <meta property="article:published_time" content="2026-11-10T14:00:00.000Z">
-<meta property="article:modified_time" content="2026-11-11T03:04:32.870Z">
+<meta property="article:modified_time" content="2026-11-18T16:06:49.640Z">
 <meta property="article:author" content="Ferne">
 <meta property="article:tag" content="c">
 <meta property="article:tag" content="linux">
@@ -175,7 +175,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-count">16</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -186,7 +186,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">20</span>
+        <span class="site-state-item-count">21</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -292,7 +292,7 @@
     <div class="post-body" itemprop="articleBody"><p>副标题：指纹模块、Linux 系统编程与 PAM 模块开发二三事</p>
 <p>本文是第一章：从串口到协议</p>
 <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>这个项目有点个人小玩具的色彩（笑），我的电脑是天选 5 Pro, 没有指纹识别模块，而我自己又主要用 Debian, 当时是和朋友去福州旅游，在闽都 THO 晚上的小型演唱会现场听 DJ 打碟感到无聊，然后思绪就开始发散，<strong>想着说每次解锁电脑都要输入密码，实在是太麻烦了，因此想搞个指纹模块来玩</strong>，于是就有了这篇博客。当然可能有人会觉得我闲得慌，也确实是闲得慌，我要是不折腾，你们看什么啊？ <del>是啊，看什么?</del></p>
-<p>注意上面的需求，因为这个需求后面给我扩展了一下，变成了接入任意 PAM 服务，也导致了一些架构上的调整，我会在第二篇文章讲述自己的 “解题思路” 和踩的一些坑，同时我也想在第二篇讲讲我自己对 AI Coding 的一些想法。</p>
+<p>注意上面的需求，因为这个需求后面给我扩展了一下，变成了接入任意 PAM 服务，也导致了一些架构上的调整，我会在第二篇文章讲述自己的 “解题思路” 和踩的一些坑，同时我也想在第三篇讲讲我自己对 AI 辅助的一些想法。</p>
 <p>指纹模块相关代码已经<a target="_blank" rel="noopener" href="https://github.com/aliferne/fp-zw111-unlocker">开源</a>， 主要逻辑部分基本完全古法编程，而审(zhao)查(cha)工作主要由 DeepSeek V4.1 Flash 负责，<strong>这篇博客也是纯手敲</strong>。</p>
 <p>这个需求我个人感觉挺简单的，应该可以直接让 v4.1 vibe 一个出来，但是我是当 recreational programming 来玩的 (幻视 tsoding)，所以没有完全 AI 开发，但却没想到这玩意写了我快一个月……（虽然我每天只有大约两三个小时投入开发就是了）。</p>
 <p>这里需要提一嘴，我是 Linux 系统编程的初学者，如下文有误，还请不吝赐教。</p>
@@ -333,7 +333,7 @@
 <li><code>int open(const char *pathname, int flags);</code></li>
 </ul>
 <p>这个函数我相信不需要过多的介绍，<code>pathname</code> 就是文件路径，而 <code>flags</code> 就是打开文件的标志位。<br>我们需要用到的 <code>flag</code>: <code>O_RDWR</code>, <code>O_NOCTTY</code>, <code>O_NONBLOCK</code>(非阻塞用于实验，实际上我们需要阻塞)</p>
-<p>我们需要读写串口，因此需要使用 <code>O_RDWR</code> 打开串口文件，而由于 Linux 会将串口抽象为 tty 设备，也就意味着默认情况下，系统可能会把串口当作一个控制终端来用，因此就可能能够发送一些特殊的控制字符，比如 <code>^C</code>，由于实际我们去使用的时候并不会发送这些特殊控制字符，因此需要借助 <code>O_NOCTTY</code> 关闭这一选项。</p>
+<p>我们需要读写串口，因此需要使用 <code>O_RDWR</code> 打开串口文件，而由于 Linux 会将串口抽象为 tty 设备，也就意味着默认情况下，系统可能会把串口当作一个控制终端来用，因此需要借助 <code>O_NOCTTY</code> 关闭这一选项。</p>
 <p><code>O_NONBLOCK</code> 从字面意思上来理解就是不要阻塞，即以非阻塞的形式打开文件，这个选项的作用我会放到下面讲。</p>
 <p>然后就轮到配置串口了：</p>
 <p>比较基础的，如设置波特率这些的代码比较简单，写起来也很无聊，因此我是直接抄的 《嵌入式 Linux 开发教程》 里面的代码，但有些配置选项则值得说道说道：</p>
@@ -367,9 +367,9 @@
 <li><code>vtime = 0, vmin = 0</code>: 此时对应不阻塞，不论如何都会直接返回，一般来说都不建议这种方式</li>
 <li><code>vtime &gt; 0, vmin = 0</code>: 此时会等待最大 vtime 的时间，只要有数据就会返回</li>
 <li><code>vtime = 0, vmin &gt; 0</code>: 此时要求至少收集到 vmin 个字节后才返回，因此少于 vmin 个字节的行为是未定义的</li>
-<li><code>vtime &gt; 0, vmin &gt; 0</code>: 此时要求只要拿到 vmin 个字节，或者到了 vtime 要求的时间， read 就会成功返回</li>
+<li><code>vtime &gt; 0, vmin &gt; 0</code>: 此时要求只要拿到 vmin 个字节，或者到了 vtime 要求的时间， read 就会成功返回, vtime 是字节间数据的等待间隔</li>
 </ol>
-<p>需要注意由于 <code>vtime</code>, <code>vmin</code> 和 <code>O_NONBLOCK</code> 是矛盾的，因此如果设置 <strong>非阻塞</strong> 读，这两个变量就必须要是 0, 不然会导致读越界的 SegFault 问题(我没去琢磨源码，如果有知道原因的大佬还请不吝赐教)。篇幅原因我们只需要了解上面这些内容就足够了，如果想要了解更多东西，可以参考<a target="_blank" rel="noopener" href="http://unixwiz.net/techtips/termios-vmin-vtime.html">这篇文章</a></p>
+<p>我这里测试发现 <code>vtime</code>, <code>vmin</code> 和 <code>O_NONBLOCK</code> 是矛盾的，如果设置 <strong>非阻塞</strong> 读，这两个变量就必须要是 0, 不然会导致读越界的 SegFault 问题(我没去琢磨源码，如果有知道原因的大佬还请不吝赐教)。篇幅原因我们只需要了解上面这些内容就足够了，如果想要了解更多东西，可以参考<a target="_blank" rel="noopener" href="http://unixwiz.net/techtips/termios-vmin-vtime.html">这篇文章</a></p>
 <p>对于第二点，实际上我们有一个很好用的检测设备是否断连的方法，我们只需要借助 <code>tcgetattr</code> 即可，这个函数在尝试获取串口配置失败时会返回 -1, 并设置 errno 为一些特定的值，如果 <code>errno == EIO</code>，那么一般就是串口断连了。严谨一些的话可以用 <code>poll</code>，但是我没用，这里会在后面解释</p>
 <p>这里可能会有人问，为什么不直接判断 <code>read</code> 后的 <code>errno</code>，问题在于第一次 <code>read</code> 返回的读取字节数为 0, 此时代表的实际上是 <code>read</code> 认为读到 EOF 了，这是成功的标志，因此不会设置 <code>errno</code>，你就无法通过这个来判断，因此要判断设备是否被拔出就必须再操作一次串口文件，因此就需要调用 <code>tcgetattr</code>，这是比较简单的：</p>
 <ul>
@@ -484,7 +484,11 @@
 <li>在锁内对串口文件进行各种读写操作</li>
 <li>检验 <code>fd</code> 是否合法 -&gt; 解锁 -&gt; 关闭文件</li>
 </ul>
-<p>自此整个 Linux 串口和系统编程部分也就结束了，下一章节我们将聚焦于 PAM 模块的开发，以及与 KDE 锁屏 kscreenlocker 和 Root 验证程序 sudo 的联动，敬请期待！</p>
+<p>自此整个 Linux 串口和系统编程部分也就结束了，下一章节我们将聚焦于 PAM 模块的开发，以及与 KDE 锁屏 kscreenlocker 和 Root 验证程序 sudo 的联动：</p>
+<ul>
+<li><a href="https://aliferne.github.io/2026/11/18/make-fp-mod-for-linux-pc-2/">中</a></li>
+<li><a href="https://aliferne.github.io/2026/11/19/make-fp-mod-for-linux-pc-3/">下</a></li>
+</ul>
 <hr>
 
     </div>
@@ -593,13 +597,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">124k</span>
+    <span title="站点总字数">146k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">1:52</span>
+    <span title="站点阅读时长">2:13</span>
   </span>
 </div>
   <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/mist/" rel="noopener" target="_blank">NexT.Mist</a> 强力驱动
