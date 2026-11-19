@@ -30,7 +30,7 @@
 <meta property="og:image" content="http://aliferne.github.io/images/make-fp-mod-for-linux-pc/sudo-pam-file-not-found.png">
 <meta property="og:image" content="http://aliferne.github.io/images/make-fp-mod-for-linux-pc/directly-unlocked.jpg">
 <meta property="article:published_time" content="2026-11-18T14:00:00.000Z">
-<meta property="article:modified_time" content="2026-11-18T16:11:28.501Z">
+<meta property="article:modified_time" content="2026-11-19T07:53:07.867Z">
 <meta property="article:author" content="Ferne">
 <meta property="article:tag" content="c">
 <meta property="article:tag" content="linux">
@@ -311,6 +311,7 @@
 <h2 id="PAM-模块工作流程"><a href="#PAM-模块工作流程" class="headerlink" title="PAM 模块工作流程"></a>PAM 模块工作流程</h2><p>PAM 应用程序指定对应的 service –&gt; 应用程序发起 <code>auth</code> 请求 –&gt; libpam 在 service 内部配置找到对应 so 文件&#x2F;模块 –&gt; <code>dlopen</code> 打开 so 文件并调用对应函数 –&gt; 处理结果返回 libpam 并进行下一步处理 –&gt; PAM 程序收到 API 的返回码并进行对应的处理</p>
 <p>上面的工作流程将会在支线中展示一整套调用链，如果有兴趣的话可以跳转过去看看，不看也没什么影响</p>
 <p>PAM 配置文件有一定的语法规则，由于配置文件的相关资料很多，这里只对需要用到的做简要说明。</p>
+<p>推荐一手资料: <a target="_blank" rel="noopener" href="https://kerrisk.com/linux/man-pages/man5/pam.d.5@@linux-pam.html">https://kerrisk.com/linux/man-pages/man5/pam.d.5@@linux-pam.html</a></p>
 <p>基本语法规则： <code>&lt;type&gt; &lt;flag&gt; &lt;path&gt; &lt;args&gt;</code><br>比如这个例子： <code>auth required xxx.so</code>，就表示 authentication （用户身份验证） 要求使用 <code>xxx.so</code> 这个模块， <code>xxx.so</code> 需要实现一些 PAM 模块要求的函数，然后通过返回 <code>PAM_*</code> 状态码告知是验证通过还是失败</p>
 <p>我们会用到的有 <code>auth</code>, <code>required</code> 和 <code>sufficient</code> 和一些特殊标志位</p>
 <ul>
@@ -332,7 +333,7 @@
 
 <p>这里关于不需要链接 PAM 模块的原因，以及使用 <code>-fPIC</code> 的原因，可以参考我之前写的 <a href="https://aliferne.github.io/2025/04/23/something-about-dyn-linking-and-static-linking/">这篇博客</a> 以及讲解 fPIC 的<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/368364069">这篇博客</a>，如果不想看的话，简单来说就是因为接下来的主程序 (<code>test_pam</code>) 会链接 PAM 模块，因此这个共享库可以找到 PAM 模块的函数，你想在这里就链接的话其实也没什么问题</p>
 <p>接下来将 so 链接到对应的位置，我这里在 <code>/lib/x86_64-linux-gnu/security</code> 中</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 测完之后记得删掉</span></span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">ln</span> $(<span class="built_in">pwd</span>)/pam_auth_test.so /lib/x86_64-linux-gnu/security</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 测完之后记得删掉</span></span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">ln</span> $(<span class="built_in">pwd</span>)/build/pam_auth_test.so /lib/x86_64-linux-gnu/security</span><br></pre></td></tr></table></figure>
 
 <p>我个人认为链接最好用硬链接，只要你的盘在同一个文件系统内就行，硬链接的好处在于两个文件都指向了同一 inode 且修改任何一个文件的内容，其他文件都会跟着更新，删除任意文件都不会导致已有的文件失效，除非全删光。</p>
 <p>不过最后开发完成之后我会删除链接文件，复制过去，并改动一些东西，你往下看就会知道原因了，我也将这部分需要用到的命令写成了 <code>make install</code> (目前暂时不包含对 kscreenlocker 的定制内容)</p>
@@ -340,7 +341,7 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">tee</span> pam-auth-test &lt;&lt; <span class="string">EOF</span></span><br><span class="line"><span class="string">auth required pam_auth_test.so</span></span><br><span class="line"><span class="string">account required pam_auth_test.so</span></span><br><span class="line"><span class="string">EOF</span></span><br></pre></td></tr></table></figure>
 
 <p>最后链接这个服务文件</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 测完之后记得删掉</span></span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">ln</span> $(<span class="built_in">pwd</span>)/pam-auth-test /etc/pam.d</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 测完之后记得删掉</span></span><br><span class="line"><span class="built_in">sudo</span> <span class="built_in">ln</span> $(<span class="built_in">pwd</span>)/build/pam-auth-test /etc/pam.d</span><br></pre></td></tr></table></figure>
 
 <p>这样子通路就基本搭建完毕了，然后我们接下来自己写一个 <a target="_blank" rel="noopener" href="https://github.com/aliferne/fp-zw111-unlocker/blob/main/test/pam-test/test_pam.c">应用程序</a></p>
 <p>然后编译：</p>
@@ -355,8 +356,8 @@
 <p>然后我们来演示下这个工具的用法：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&gt; pamtester -v pam-auth-test testusr authenticate</span><br><span class="line">pamtester: invoking pam_start(pam-auth-test, testusr, ...)</span><br><span class="line">pamtester: performing operation - authenticate</span><br><span class="line">[pam_testauth] pam_sm_authenticate called</span><br><span class="line">Password:</span><br><span class="line">[pam_testauth] got user=<span class="string">&#x27;testusr&#x27;</span> pass=<span class="string">&#x27;testpwd&#x27;</span></span><br><span class="line">[pam_testauth] MATCH -&gt; PAM_SUCCESS</span><br><span class="line">pamtester: successfully authenticated</span><br></pre></td></tr></table></figure>
 
-<p>如果你对于 PAM 应用和模块之间的通信机制有兴趣的话，可以参考 <a href="#libpam-%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90--pam-%E5%BA%94%E7%94%A8%E4%B8%8E%E6%A8%A1%E5%9D%97%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6">支线</a> 中的讲解，这部分内容和自定义 kscreenlocker 的 UI 界面原理相关，如果你不在乎支线，那么可以忽略，但是如果你想要自定义一下的话，那我还是推荐你看一下的</p>
-<h1 id="二、为其他应用打通-“任督-PAM-脉”"><a href="#二、为其他应用打通-“任督-PAM-脉”" class="headerlink" title="二、为其他应用打通 “任督 PAM 脉”"></a>二、为其他应用打通 “任督 PAM 脉”</h1><h2 id="udev-固定设备名称"><a href="#udev-固定设备名称" class="headerlink" title="udev 固定设备名称"></a><code>udev</code> 固定设备名称</h2><p>我们之前一直都在用 <code>/dev/ttyUSB1</code> 这样的来访问设备，然而这样子访问是很不方便的，原因在于设备名称可能发生变化，因此我们必须要以什么手段固定设备名称，在 Linux 下我们可以通过 udev 实现两个目标：</p>
+<p>如果你对于 PAM 应用和模块之间的通信机制有兴趣的话，可以参考 <a href="#%E5%9B%9B%E6%94%AF%E7%BA%BF">支线</a> 中的讲解，这部分内容和自定义 kscreenlocker 的 UI 界面原理相关，如果你不在乎支线，那么可以忽略，但是如果你想要自定义一下的话，那我还是推荐你看一下的</p>
+<h1 id="二、为其他应用打通-“任督-PAM-脉”"><a href="#二、为其他应用打通-“任督-PAM-脉”" class="headerlink" title="二、为其他应用打通 “任督 PAM 脉”"></a>二、为其他应用打通 “任督 PAM 脉”</h1><h2 id="udev-固定设备名称"><a href="#udev-固定设备名称" class="headerlink" title="udev 固定设备名称"></a><code>udev</code> 固定设备名称</h2><p>我们之前一直都在用 <code>/dev/ttyUSB0</code> 这样的来访问设备，然而这样子访问是很不方便的，原因在于设备名称可能发生变化，因此我们必须要以什么手段固定设备名称，在 Linux 下我们可以通过 udev 实现两个目标：</p>
 <ol>
 <li>固定设备名称</li>
 <li>不论设备插入哪个 USB 口，都能够以相同名称访问</li>
@@ -456,7 +457,6 @@
 <li><a target="_blank" rel="noopener" href="https://github.com/aliferne/fp-zw111-unlocker/blob/main/test/pam-test/pam_auth_test.c">模块代码</a></li>
 </ul>
 <p>应用程序发起的验证流程为： <code>pam_start</code> -&gt; <code>pam_authenticate</code> -&gt; <code>pam_end</code></p>
-<p>我们在 <code>pam_start</code> 阶段需要给到</p>
 <p>而对应到 Linux-PAM 里面的调用流程就变成了：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// 箭头指向表示函数调用的方向</span><br><span class="line">pam_start -+</span><br><span class="line">           |</span><br><span class="line">           v</span><br><span class="line">_pam_init_handlers  -+</span><br><span class="line">                     |</span><br><span class="line">_pam_load_conf_file &lt;-&gt; _pam_parse_conf_file -&gt; _pam_add_handler -&gt; _pam_load_module</span><br></pre></td></tr></table></figure>
 
@@ -466,7 +466,7 @@
 <p>其中 <code>h-&gt;func</code> 就是我们的 <code>pam_sm_authenticate</code>，然后也是一路返回验证结果，最后调用 <code>pam_end</code> 释放资源， 这就是整个 Linux-PAM 模块的工作流程了 (请允许我小小自豪一下，我全程用的 vim + grep 抓逻辑，只用了大概 15 分钟就研究出来了)</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">/** 这里只展示了 /linux-pam/libpam/pam_get_authtok.c 里面的调用链</span><br><span class="line"> *  像我们常见的 Linux 的密码提示的更上层调用来自于 /libpam/modules/pam_unix.c</span><br><span class="line"> *  由于我们并不研究各个模块，这部分我也就没什么兴趣去探索</span><br><span class="line"> *  如果你有兴趣的话可以自行克隆源码去研究</span><br><span class="line"> *  但整体上来说代码是非常 make sense 的</span><br><span class="line"> *  你甚至不需要 GDB 和 IDE 就能读个七七八八</span><br><span class="line"> *  除了这代码库的缩进风格属实让人心生爱慕以外没什么别的缺点</span><br><span class="line"> *  我快把 % 和 [[ 按烂了，最后还是决定一个 gg=G 过去算了</span><br><span class="line"> */</span><br><span class="line">pam_get_authtok -&gt;  pam_get_authtok_internal </span><br><span class="line">    -&gt; pam_prompt -&gt;  pam_vprompt -&gt; conv_func(我们自定义的通信函数)</span><br></pre></td></tr></table></figure>
 
-<p>而我们 [之前](#PAM 模块工作流程) 提到， PAM 应用发起请求，然后再由 PAM 模块返回认证结果，这里就依赖于 PAM 应用和模块的通信，通信的函数需要满足如下签名：</p>
+<p>而我们 <a href="#PAM-%E6%A8%A1%E5%9D%97%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B">之前</a> 提到， PAM 应用发起请求，然后再由 PAM 模块返回认证结果，这里就依赖于 PAM 应用和模块的通信，通信的函数需要满足如下签名：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/// @file /linux-pam/libpam/include/security/_pam_types.h</span></span><br><span class="line"><span class="type">int</span> (*conv)(<span class="type">int</span> num_msg, <span class="type">const</span> <span class="keyword">struct</span> pam_message **msg,</span><br><span class="line">		<span class="keyword">struct</span> pam_response **resp, <span class="type">void</span> *appdata_ptr);</span><br></pre></td></tr></table></figure>
 
 <p>这里是对应的调用代码，我们构造的 <code>appdata_ptr</code> 会被作为调用对象，此时我们需要在特定的 <code>msg-&gt;style</code> 进行特定的操作(如示例代码中的设置 <code>reply</code> 和 <code>resp</code>)，比如代码中的几个例子，这是因为在 Linux-PAM 内部，需要覆写这里相关的内存，然后交由我们编写的 PAM 模块进行验证</p>
