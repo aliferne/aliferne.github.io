@@ -55,6 +55,8 @@ PAM 应用程序指定对应的 service --> 应用程序发起 `auth` 请求 -->
 
 PAM 配置文件有一定的语法规则，由于配置文件的相关资料很多，这里只对需要用到的做简要说明。
 
+推荐一手资料: https://kerrisk.com/linux/man-pages/man5/pam.d.5@@linux-pam.html
+
 基本语法规则： `<type> <flag> <path> <args>`
 比如这个例子： `auth required xxx.so`，就表示 authentication （用户身份验证） 要求使用 `xxx.so` 这个模块， `xxx.so` 需要实现一些 PAM 模块要求的函数，然后通过返回 `PAM_*` 状态码告知是验证通过还是失败
 
@@ -99,7 +101,7 @@ gcc -fPIC -shared -o pam_auth_test.so pam_auth_test.c
 
 ```bash
 # 测完之后记得删掉
-sudo ln $(pwd)/pam_auth_test.so /lib/x86_64-linux-gnu/security
+sudo ln $(pwd)/build/pam_auth_test.so /lib/x86_64-linux-gnu/security
 ```
 
 我个人认为链接最好用硬链接，只要你的盘在同一个文件系统内就行，硬链接的好处在于两个文件都指向了同一 inode 且修改任何一个文件的内容，其他文件都会跟着更新，删除任意文件都不会导致已有的文件失效，除非全删光。
@@ -119,7 +121,7 @@ EOF
 
 ```bash
 # 测完之后记得删掉
-sudo ln $(pwd)/pam-auth-test /etc/pam.d
+sudo ln $(pwd)/build/pam-auth-test /etc/pam.d
 ```
 
 这样子通路就基本搭建完毕了，然后我们接下来自己写一个 [应用程序][test_pam.c]
@@ -162,13 +164,13 @@ Password:
 pamtester: successfully authenticated
 ```
 
-如果你对于 PAM 应用和模块之间的通信机制有兴趣的话，可以参考 [支线](#libpam-工作原理解析--pam-应用与模块通信机制) 中的讲解，这部分内容和自定义 kscreenlocker 的 UI 界面原理相关，如果你不在乎支线，那么可以忽略，但是如果你想要自定义一下的话，那我还是推荐你看一下的
+如果你对于 PAM 应用和模块之间的通信机制有兴趣的话，可以参考 [支线](#四支线) 中的讲解，这部分内容和自定义 kscreenlocker 的 UI 界面原理相关，如果你不在乎支线，那么可以忽略，但是如果你想要自定义一下的话，那我还是推荐你看一下的
 
 # 二、为其他应用打通 “任督 PAM 脉”
 
 ## `udev` 固定设备名称
 
-我们之前一直都在用 `/dev/ttyUSB1` 这样的来访问设备，然而这样子访问是很不方便的，原因在于设备名称可能发生变化，因此我们必须要以什么手段固定设备名称，在 Linux 下我们可以通过 udev 实现两个目标：
+我们之前一直都在用 `/dev/ttyUSB0` 这样的来访问设备，然而这样子访问是很不方便的，原因在于设备名称可能发生变化，因此我们必须要以什么手段固定设备名称，在 Linux 下我们可以通过 udev 实现两个目标：
 
 1. 固定设备名称
 2. 不论设备插入哪个 USB 口，都能够以相同名称访问
@@ -510,8 +512,6 @@ SUBSYSTEMS=="usb", DRIVERS=="ch341", MODE="0666", SYMLINK+="FP_ZW111"
 
 应用程序发起的验证流程为： `pam_start` -> `pam_authenticate` -> `pam_end`
 
-我们在 `pam_start` 阶段需要给到
-
 而对应到 Linux-PAM 里面的调用流程就变成了：
 
 ```
@@ -548,7 +548,7 @@ pam_get_authtok ->  pam_get_authtok_internal
     -> pam_prompt ->  pam_vprompt -> conv_func(我们自定义的通信函数)
 ```
 
-而我们 [之前](#PAM 模块工作流程) 提到， PAM 应用发起请求，然后再由 PAM 模块返回认证结果，这里就依赖于 PAM 应用和模块的通信，通信的函数需要满足如下签名：
+而我们 [之前](#PAM-模块工作流程) 提到， PAM 应用发起请求，然后再由 PAM 模块返回认证结果，这里就依赖于 PAM 应用和模块的通信，通信的函数需要满足如下签名：
 
 ```c
 /// @file /linux-pam/libpam/include/security/_pam_types.h
