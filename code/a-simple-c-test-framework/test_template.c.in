@@ -1,0 +1,27 @@
+#if 0 // don't add to compilation
+
+#include "test_pub.h"
+
+TEST_DECL(test1)
+{
+    TEST_CHECK(1 == 1);
+}
+
+TEST_DECL(test2)
+{
+    TEST_CHECK(1 != 1);
+}
+
+int main()
+{
+#define TEST_LIST(X) \
+    X(test1)         \
+    X(test2)         
+
+#define TEST_MAIN(name) RUN_TEST(name);
+    TEST_LIST(TEST_MAIN)
+#undef TEST_MAIN
+    TEST_SUMMARY();
+}
+
+#endif
